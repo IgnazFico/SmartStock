@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import DataTable from "../../components/DataTable.js";
-import DataModal from "../../components/DataModal";
+import MasterDataTable from "../../components/MasterDataTable.js";
+import MasterDataModal from "../../components/MasterDataModal.js";
 import styles from "./style.module.css";
 
 export default function InsertMasterData() {
@@ -43,6 +43,15 @@ export default function InsertMasterData() {
 
     fetchItemMaster();
     fetchLocator();
+
+    // Poll every 5 seconds
+    const interval = setInterval(() => {
+      fetchItemMaster();
+      fetchLocator();
+    }, 5000);
+
+    // Clear interval on unmount
+    return () => clearInterval(interval);
   }, []);
 
   // Handle adding new item
@@ -62,7 +71,9 @@ export default function InsertMasterData() {
     })
       .then((res) => res.json())
       .then((data) => {
-        setItemMasterData((prev) => [...prev, data]);
+        fetch("/api/itemMaster")
+          .then((res) => res.json())
+          .then((data) => setItemMasterData(data));
       });
   };
 
@@ -77,7 +88,9 @@ export default function InsertMasterData() {
     })
       .then((res) => res.json())
       .then((data) => {
-        setLocatorData((prev) => [...prev, data]);
+        fetch("/api/locatorMaster")
+          .then((res) => res.json())
+          .then((data) => setLocatorData(data));
       });
   };
 
@@ -117,23 +130,26 @@ export default function InsertMasterData() {
         <div className={styles.tablesContainer}>
           <div className={styles.itemsTable}>
             <h2>Item Master Data</h2>
-            <DataTable data={itemMasterData} columns={itemMasterColumns} />
+            <MasterDataTable
+              data={itemMasterData}
+              columns={itemMasterColumns}
+            />
           </div>
           <div className={styles.locatorTable}>
             <h2>Locator Master Data</h2>
-            <DataTable data={locatorData} columns={locatorColumns} />
+            <MasterDataTable data={locatorData} columns={locatorColumns} />
           </div>
         </div>
       </div>
       {/* Modal for adding new item */}
-      <DataModal
+      <MasterDataModal
         isOpen={isItemModalOpen}
         onClose={() => setItemModalOpen(false)}
         onSubmit={handleAddItem}
         fields={itemMasterColumns}
       />
       {/* Modal for adding new locator */}
-      <DataModal
+      <MasterDataModal
         isOpen={isLocatorModalOpen}
         onClose={() => setLocatorModalOpen(false)}
         onSubmit={handleAddLocator}

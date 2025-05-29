@@ -1,0 +1,46 @@
+.chartContainer {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f9f9f9;
+}
+
+.title {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.barWrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.label {
+  width: 100px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.barOuter {
+  flex-grow: 1;
+  background-color: #eee;
+  height: 24px;
+  border-radius: 4px;
+  position: relative;
+}
+
+.barInner {
+  background-color: #3b82f6;
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  color: white;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}

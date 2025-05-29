@@ -47,6 +47,24 @@ export default function NavBar() {
               Print
             </a>
           </li>
+          <li>
+            <a href="/production">
+              <img src="" alt="Production" />
+              Production
+            </a>
+          </li>
+          <li>
+            <a href="/production-tracking">
+              <img src="" alt="Production Tracking" />
+              Production Tracking
+            </a>
+          </li>
+          <li>
+            <a href="/purchasing">
+              <img src="" alt="Purchasing" />
+              Purchasing
+            </a>
+          </li>
           {(role === "super" || role === "admin") && (
             <li>
               <a href="auth/register">

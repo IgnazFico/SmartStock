@@ -19,7 +19,7 @@ const RegisterForm = () => {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter(); // Next.js router for navigation after registration
+  const router = useRouter();
 
   // Handle input changes
   const handleChange = (e) => {

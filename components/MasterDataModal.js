@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import styles from "./DataModal.module.css";
+import styles from "./MasterDataModal.module.css";
 
 const DataModal = ({ isOpen, onClose, onSubmit, fields }) => {
   const [formData, setFormData] = useState({});

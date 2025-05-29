@@ -1,0 +1,99 @@
+.formContainer {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 20px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: sans-serif;
+}
+
+.title {
+  margin-bottom: 20px;
+  font-size: 20px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.formGrid {
+  display: flex;
+  gap: 40px;
+}
+
+.formColumn {
+  flex: 1;
+}
+
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.formGroup label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.formGroup input,
+.formGroup select {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 14px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.tabButton {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #eee;
+  cursor: pointer;
+}
+
+.tabButton.active {
+  background-color: #0070f3;
+  color: white;
+  font-weight: bold;
+}
+
+.operationTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.operationTable th,
+.operationTable td,
+.materialsTable th,
+.materialsTable td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.operationTable input,
+.operationTable select,
+.materialsTable input,
+.materialsTable select {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.addButton {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.addButton:hover {
+  background-color: #005dc1;
+}

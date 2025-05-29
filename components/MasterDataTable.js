@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./DataTable.module.css";
+import styles from "./MasterDataTable.module.css";
 
 const DataTable = ({ data, columns }) => {
   return (
