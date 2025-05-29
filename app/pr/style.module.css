@@ -1,0 +1,39 @@
+.table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .tableHeadRow {
+    background-color: #f2f2f2;
+  }
+  
+  .table th {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+  }
+  
+  .table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .container {
+    margin-top: 20px;
+  }
+  
+  .wrapper {
+    padding: 20px;
+    background: linear-gradient(to bottom right, #f7fafd, #e3f2f9);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+  }
+  
+  .pageTitle {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0a4e70;
+    margin-bottom: 16px;
+  }
+  
