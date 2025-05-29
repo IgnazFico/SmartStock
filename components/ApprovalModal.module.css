@@ -1,0 +1,107 @@
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+/* Konten Modal */
+.modalContent {
+  position: relative;
+  background: #fff;
+  padding: 24px 28px;
+  border-radius: 12px;
+  width: 420px;
+  max-width: 90%;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Aksi Modal (Tombol) */
+.modalActions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Tombol Approve */
+.approveButton {
+  flex: 1;
+  background-color: #4caf50;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+}
+.approveButton:hover {
+  background-color: #3a9d40;
+  box-shadow: 0 3px 10px rgba(58, 157, 64, 0.7);
+}
+
+/* Tombol Reject */
+.rejectButton {
+  flex: 1;
+  background-color: #f44336;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+}
+.rejectButton:hover {
+  background-color: #c6372a;
+  box-shadow: 0 3px 10px rgba(198, 55, 42, 0.7);
+}
+
+/* Tombol Close */
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background-color: #363333;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+  flex: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.closeButton:hover {
+  background-color: #252221;
+  box-shadow: 0 3px 10px rgba(37, 34, 33, 0.8);
+}
+
+/* Tombol Convert PR ke PO */
+.convertButton {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 16px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.convertButton:hover {
+  background-color: #0056b3;
+}
