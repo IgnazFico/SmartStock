@@ -1,4 +1,4 @@
-"use client";
+"use client"; // This ensures it's a client-side component
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";

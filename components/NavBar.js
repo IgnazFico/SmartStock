@@ -73,7 +73,7 @@ export default function NavBar() {
                   <a href="/inventory/wip_inventory">Production Warehouse</a>
                 </li>
                 <li>
-                  <a href="/inventory/fg">Finished Goods Warehouse</a>
+                  <a href="/inventory/fg">FG Warehouse</a>
                 </li>
               </ul>
             )}
@@ -136,9 +136,9 @@ export default function NavBar() {
           </li>
           {role === "admin" && (
             <li>
-              <a href="auth/register">
+              <a href="/auth/register">
                 <img src="/add-user-svgrepo-com.svg" alt="Register" />
-                Register
+                Daftar
               </a>
             </li>
           )}
@@ -146,15 +146,14 @@ export default function NavBar() {
             <li>
               <a href="/master_data">
                 <img src="/master-data.png" alt="Master Data" />
-                Master Data
+                Data Utama
               </a>
             </li>
           )}
-
           <li>
             <a onClick={handleLogOut} href="/auth">
               <img src="/login-svgrepo-com.svg" alt="Logout Icon" />
-              Logout
+              Keluar
             </a>
           </li>
         </ul>

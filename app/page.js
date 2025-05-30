@@ -1,4 +1,4 @@
-"use client";
+"use client"; // This ensures it's a client-side component
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -6,10 +6,11 @@ import StockLevelChart from "@/components/StockLevelChart";
 import styles from "./dashboard.module.css";
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
-  const loading = status === "loading";
-  const router = useRouter();
+  const { data: session, status } = useSession(); // Fetch session and status using useSession
+  const loading = status === "loading"; // Check if the session is loading
+  const router = useRouter(); // For redirection
 
+  // If the session is loading, show a loading message
   if (loading) {
     return <p>Loading...</p>;
   }

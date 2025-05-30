@@ -21,8 +21,12 @@ const RegisterForm = () => {
   const [barcodeMessage, setBarcodeMessage] = useState("");
   const [barcodeError, setBarcodeError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+<<<<<<< HEAD
 
   const router = useRouter();
+=======
+  const router = useRouter(); // Next.js router for navigation after registration
+>>>>>>> 2c13cbe77da557bccf0fc65cf9fddfbfcf1a8f55
 
   // Handle input changes
   const handleChange = (e) => {

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import MasterDataTable from "../../components/MasterDataTable.js";
-import MasterDataModal from "../../components/MasterDataModal.js";
+import DataTable from "../../components/DataTable.js";
+import DataModal from "../../components/DataModal";
 import styles from "./style.module.css";
 
 export default function InsertMasterData() {
@@ -59,9 +59,7 @@ export default function InsertMasterData() {
     })
       .then((res) => res.json())
       .then((data) => {
-        fetch("/api/itemMaster")
-          .then((res) => res.json())
-          .then((data) => setItemMasterData(data));
+        setItemMasterData((prev) => [...prev, data]);
       });
   };
 
@@ -76,9 +74,7 @@ export default function InsertMasterData() {
     })
       .then((res) => res.json())
       .then((data) => {
-        fetch("/api/locatorMaster")
-          .then((res) => res.json())
-          .then((data) => setLocatorData(data));
+        setLocatorData((prev) => [...prev, data]);
       });
   };
 
@@ -117,26 +113,23 @@ export default function InsertMasterData() {
         <div className={styles.tablesContainer}>
           <div className={styles.itemsTable}>
             <h2>Item Master Data</h2>
-            <MasterDataTable
-              data={itemMasterData}
-              columns={itemMasterColumns}
-            />
+            <DataTable data={itemMasterData} columns={itemMasterColumns} />
           </div>
           <div className={styles.locatorTable}>
             <h2>Locator Master Data</h2>
-            <MasterDataTable data={locatorData} columns={locatorColumns} />
+            <DataTable data={locatorData} columns={locatorColumns} />
           </div>
         </div>
       </div>
       {/* Modal for adding new item */}
-      <MasterDataModal
+      <DataModal
         isOpen={isItemModalOpen}
         onClose={() => setItemModalOpen(false)}
         onSubmit={handleAddItem}
         fields={itemMasterColumns}
       />
       {/* Modal for adding new locator */}
-      <MasterDataModal
+      <DataModal
         isOpen={isLocatorModalOpen}
         onClose={() => setLocatorModalOpen(false)}
         onSubmit={handleAddLocator}

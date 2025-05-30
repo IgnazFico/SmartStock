@@ -1,0 +1,107 @@
+.formWrapper {
+    max-width: 480px;
+    margin: 30px auto;
+    padding: 25px 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .title {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    font-weight: 700;
+  }
+  
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .formLabel {
+    display: flex;
+    flex-direction: column;
+    font-weight: 600;
+    color: #555;
+    font-size: 14px;
+  }
+  
+  .formInput {
+    margin-top: 6px;
+    padding: 10px 12px;
+    font-size: 15px;
+    border: 1.8px solid #ccc;
+    border-radius: 5px;
+    transition: border-color 0.3s ease;
+  }
+  
+  .formInput:focus {
+    border-color: #0070f3;
+    outline: none;
+    box-shadow: 0 0 6px #0070f3aa;
+  }
+  
+  .formButton {
+    margin-top: 10px;
+    padding: 12px 0;
+    background-color: #0070f3;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.25s ease;
+  }
+  
+  .formButton:disabled {
+    background-color: #99c0f9;
+    cursor: not-allowed;
+  }
+  
+  .formButton:hover:not(:disabled) {
+    background-color: #005bb5;
+  }
+  
+  .error {
+    color: #d93025;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: -8px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  /* Responsive for small screens */
+  @media (max-width: 600px) {
+    .formWrapper {
+      margin: 20px 15px;
+      padding: 20px 15px;
+    }
+  }
+
+  .formHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .closeButton {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+    transition: color 0.2s ease-in-out;
+  }
+  
+  .closeButton:hover {
+    color: #ff0000;
+  }
+  
+  

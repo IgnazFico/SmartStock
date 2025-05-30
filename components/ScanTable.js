@@ -4,11 +4,11 @@ export default function ScanTable({ scanRecords }) {
   return (
     <div
       style={{
-        maxHeight: "calc(78vh - 100px)", // Set a max height for scroll
-        overflowY: "auto", // Enable vertical scrolling if content overflows
-        overflowX: "auto", // Enable horizontal scrolling if needed
+        maxHeight: "calc(78vh - 100px)",
+        overflowY: "auto",
+        overflowX: "auto",
         marginTop: "20px",
-        border: "1px solid #ddd", // Add border around the table container
+        border: "1px solid #ddd",
         borderRadius: "4px",
       }}
     >
@@ -21,51 +21,41 @@ export default function ScanTable({ scanRecords }) {
       >
         <thead style={{ position: "sticky", top: "0", zIndex: "1" }}>
           <tr style={{ backgroundColor: "#f2f2f2" }}>
+
             <th style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-              Locator
+              part_number
             </th>
             <th style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-              PO
+              quantity
             </th>
             <th style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-              Part Number
+              locator
             </th>
             <th style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-              Quantity
+              time_submitted
             </th>
-            <th style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-              ID
-            </th>
-            <th style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-              Barcode
-            </th>
+
           </tr>
         </thead>
         <tbody>
           {scanRecords.map((record, index) => (
             <tr
-              key={index}
+              key={record._id || index}
               style={{
                 backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
               }}
             >
               <td style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-                {record.locator}
+                {record.part_number}
               </td>
               <td style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-                {record.po_no}
+                {record.quantity}
+              </td>
+               <td style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
+               {record.locator}
               </td>
               <td style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-                {record.part}
-              </td>
-              <td style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-                {record.qty}
-              </td>
-              <td style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-                {record.id}
-              </td>
-              <td style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
-                {record.barcode}
+                {record.time_submitted}
               </td>
             </tr>
           ))}
