@@ -1,14 +1,14 @@
-"use client";
+"use client"; // This ensures it's a client-side component
 
 import { signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import StockLevelChart from "@/components/StockLevelChart";
+import { useRouter } from "next/navigation"; // useRouter for redirect
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
-  const loading = status === "loading";
-  const router = useRouter();
+  const { data: session, status } = useSession(); // Fetch session and status using useSession
+  const loading = status === "loading"; // Check if the session is loading
+  const router = useRouter(); // For redirection
 
+  // If the session is loading, show a loading message
   if (loading) {
     return <p>Loading...</p>;
   }
@@ -35,10 +35,6 @@ export default function Dashboard() {
           <h1>Dashboard</h1>
           <h2>Super User Actions</h2>
           <p>You have access to admin features.</p>
-          <div>
-            <h1>Stock Level Dashboard</h1>
-            <StockLevelChart />
-          </div>
         </div>
       )}
 
@@ -46,10 +42,6 @@ export default function Dashboard() {
         <div>
           <h2>Normal User Actions</h2>
           <p>You have access to normal user features.</p>
-          <div>
-            <h1>Stock Level Dashboard</h1>
-            <StockLevelChart />
-          </div>
         </div>
       )}
 

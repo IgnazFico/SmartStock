@@ -1,13 +1,16 @@
+import React from "react";
 import { QRCodeCanvas } from "qrcode.react";
 
 const QRCodeTemplate = ({
-  poNumber,
-  partNumber,
+  Inventory_ID,
+  part_number,
   quantity,
-  uniqueId,
+  warehouse_Id,
   workerBarcode,
+  time_submitted,
 }) => {
-  const qrCodeData = `${poNumber}.${partNumber}.${quantity}.${uniqueId}.${workerBarcode}`;
+  // Data QR code sesuai kebutuhan FG
+  const qrCodeData = `${Inventory_ID}|${part_number}|${quantity}|${warehouse_Id}|${workerBarcode}|${time_submitted}`;
   const printDate = new Date().toLocaleDateString("en-GB");
 
   return (
@@ -39,7 +42,7 @@ const QRCodeTemplate = ({
               fontWeight: "800",
             }}
           >
-            {poNumber}
+            {Inventory_ID}
           </h1>
           <h3
             style={{
@@ -48,7 +51,7 @@ const QRCodeTemplate = ({
               fontWeight: "600",
             }}
           >
-            {partNumber}
+            {part_number}
           </h3>
         </div>
         <div
@@ -81,8 +84,8 @@ const QRCodeTemplate = ({
               top: "50%",
             }}
           >
-            {uniqueId}
-          </p>{" "}
+            {warehouse_Id}
+          </p>
           <p
             style={{
               fontSize: "16px",
@@ -120,8 +123,7 @@ const QRCodeTemplate = ({
             }}
           >
             PRINTEC TO MATTEL
-          </p>{" "}
-          {/* Customize this as needed */}
+          </p>
           <p
             style={{
               fontSize: "16px",

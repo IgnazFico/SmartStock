@@ -1,16 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import styles from "./NavBar.module.css";
 import { signOut } from "next-auth/react";
 
 export default function NavBar() {
-  const { data: session, status } = useSession(); // Get session and status
-  const loading = status === "loading"; // Check if the session is loading
+  const { data: session, status } = useSession();
+  const loading = status === "loading";
+  const role = session?.user?.role;
 
-  const role = session?.user?.role; // Check if the user is a super user
+  const [isInventoryOpen, setInventoryOpen] = useState(false);
+  const [isScanOpen, setScanOpen] = useState(false);
+  const [isPrintOpen, setPrintOpen] = useState(false);
 
-  function handleLogOut() {
+  function handleLogOut() {   
     signOut();
   }
 
@@ -24,52 +28,87 @@ export default function NavBar() {
         <hr className={styles.rounded}></hr>
         <ul className={styles.list}>
           <li>
-            <a href="/scan">
+            <div
+              className={styles.dropdown}
+              onClick={() => setScanOpen(!isScanOpen)}
+            >
               <img src="/scan-svgrepo-com.svg" alt="Scan" />
               Scan
-            </a>
+
+            </div>
+            {isScanOpen && (
+              <ul className={styles.dropdownMenu}>
+                <li>
+                  <a href="/scan/scan_fg">Scan FG</a>
+                </li>
+                <li>
+                  <a href="/scan/scan_prd">Scan Production</a>
+                </li>
+                <li>
+                  <a href="/scan/scan_rm">Scan RM</a>
+                </li>
+              </ul>
+            )}
           </li>
           <li>
             <a href="/log">
               <img src="/log-svgrepo-com.svg" alt="Log" />
               Log
+
             </a>
           </li>
           <li>
-            <a href="/inventory">
+            <div
+              className={styles.dropdown}
+              onClick={() => setInventoryOpen(!isInventoryOpen)}
+            >
               <img src="/inventory_icon.png" alt="Inventory" />
-              Inventory
-            </a>
+              Inventaris
+
+            </div>
+            {isInventoryOpen && (
+              <ul className={styles.dropdownMenu}>
+                <li>
+                  <a href="/inventory/rm">Raw Material Warehouse</a>
+                </li>
+                <li>
+                  <a href="/inventory/wip_inventory">Production Warehouse</a>
+                </li>
+                <li>
+                  <a href="/inventory/fg">FG Warehouse</a>
+                </li>
+              </ul>
+            )}
           </li>
           <li>
-            <a href="/print">
+            <div
+              className={styles.dropdown}
+              onClick={() => setPrintOpen(!isPrintOpen)}
+            >
               <img src="/print-svgrepo-com.svg" alt="Print" />
               Print
-            </a>
-          </li>
-          <li>
-            <a href="/production">
-              <img src="" alt="Production" />
-              Production
-            </a>
-          </li>
-          <li>
-            <a href="/production-tracking">
-              <img src="" alt="Production Tracking" />
-              Production Tracking
-            </a>
-          </li>
-          <li>
-            <a href="/purchasing">
-              <img src="" alt="Purchasing" />
-              Purchasing
-            </a>
+
+            </div>
+            {isPrintOpen && (
+              <ul className={styles.dropdownMenu}>
+                <li>
+                  <a href="/print/print_fg">Print FG</a>
+                </li>
+                <li>
+                  <a href="/print/print_prd">Print Production</a>
+                </li>
+                <li>
+                  <a href="/print/print_rm">Print RM</a>
+                </li>
+              </ul>
+            )}
           </li>
           {(role === "super" || role === "admin") && (
             <li>
-              <a href="auth/register">
+              <a href="/auth/register">
                 <img src="/add-user-svgrepo-com.svg" alt="Register" />
-                Register
+              Daftar
+
               </a>
             </li>
           )}
@@ -77,15 +116,16 @@ export default function NavBar() {
             <li>
               <a href="/master_data">
                 <img src="/master-data.png" alt="Master Data" />
-                Master Data
+              Data Utama
+
               </a>
             </li>
           )}
-
           <li>
             <a onClick={handleLogOut} href="/auth">
               <img src="/login-svgrepo-com.svg" alt="Logout Icon" />
-              Logout
+              Keluar
+
             </a>
           </li>
         </ul>

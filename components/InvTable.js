@@ -3,17 +3,14 @@ import styles from "./InvTable.module.css";
 
 const InvTable = React.memo(({ records, handleRecordClick }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 15; // Adjust this number based on how many records you want per page
+  const recordsPerPage = 15;
 
-  // Calculate the indices for the current page
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
   const currentRecords = records.slice(indexOfFirstRecord, indexOfLastRecord);
 
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // If records is undefined or empty
   if (!records || records.length === 0) {
     return <p>No records to display.</p>;
   }
@@ -23,10 +20,12 @@ const InvTable = React.memo(({ records, handleRecordClick }) => {
       <table className={styles.table}>
         <thead>
           <tr className={styles.tableHeadRow}>
-            <th>LOCATOR</th>
-            <th>PART</th>
-            <th>PO</th>
-            <th>QTY</th>
+            <th>Inventory ID</th>
+            <th>Part Number</th>
+            <th>Quantity</th>
+            <th>Locator</th>
+            <th>Warehouse</th>
+            <th>Time Submitted</th>
           </tr>
         </thead>
         <tbody>
@@ -39,10 +38,12 @@ const InvTable = React.memo(({ records, handleRecordClick }) => {
                 cursor: "pointer",
               }}
             >
+              <td>{record.Inventory_ID}</td>
+              <td>{record.part_number}</td>
+              <td>{record.quantity}</td>
               <td>{record.locator}</td>
-              <td>{record.part}</td>
-              <td>{record.po_no}</td>
-              <td>{record.qty}</td>
+              <td>{record.warehouse_Id}</td>
+              <td>{record.time_submitted}</td>
             </tr>
           ))}
         </tbody>
@@ -60,7 +61,7 @@ const InvTable = React.memo(({ records, handleRecordClick }) => {
                 margin: "0 5px",
                 padding: "5px 10px",
                 backgroundColor: currentPage === i + 1 ? "#074d6f" : "#09587f",
-                color: currentPage === i + 1 ? "#fff" : "#fff",
+                color: "#fff",
                 border: "none",
                 borderRadius: "2px",
                 cursor: "pointer",

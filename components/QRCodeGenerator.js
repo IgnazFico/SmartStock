@@ -1,23 +1,43 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { debounce } from "lodash";
-import QRCodeTemplate from "./QRCodeTemplate"; // Import your template component
-import QRCodeTemplateA4 from "./QRCodeTemplateA4"; // Import your template component
-import { createRoot } from "react-dom/client"; // Use React 18 createRoot
+import QRCodeTemplate from "./QRCodeTemplate";
+import QRCodeTemplateA4 from "./QRCodeTemplateA4";
+import { createRoot } from "react-dom/client";
 import styles from "./QRCodeGenerator.module.css";
 
 const QRCodeGenerator = () => {
   const [workerBarcode, setWorkerBarcode] = useState("");
   const [isWorkerValid, setIsWorkerValid] = useState(false);
-  const [poNumber, setPoNumber] = useState("");
-  const [partNumber, setPartNumber] = useState("");
+  const [Inventory_ID, setInventory_ID] = useState("");
+  const [part_number, setPartNumber] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [warehouse_Id, setWarehouse_Id] = useState("wh_fg");
   const [copy, setCopy] = useState(1);
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
 
-  // Function to validate worker barcode by calling API
+  // Fetch Inventory_ID otomatis setelah worker valid
+  useEffect(() => {
+    const fetchInventoryId = async () => {
+      try {
+        const res = await fetch("/api/generateInventoryId");
+        const data = await res.json();
+        setInventory_ID(data.inventoryId);
+      } catch (err) {
+        setInventory_ID("");
+        setError("Failed to generate Inventory ID");
+      }
+    };
+    if (isWorkerValid) {
+      fetchInventoryId();
+    } else {
+      setInventory_ID("");
+    }
+  }, [isWorkerValid]);
+
+  // Validate worker barcode
   const validateWorkerBarcode = useCallback(
     debounce(async (barcode) => {
       try {
@@ -35,14 +55,12 @@ const QRCodeGenerator = () => {
           setError("");
         }
       } catch (error) {
-        console.error("Error validating worker barcode:", error);
         setError("An error occurred during validation.");
       }
     }, 300),
     []
   );
 
-  // Update worker barcode input and validate it
   const handleWorkerBarcodeChange = (e) => {
     const barcode = e.target.value;
     setWorkerBarcode(barcode);
@@ -55,17 +73,7 @@ const QRCodeGenerator = () => {
     }
   };
 
-  // Function to handle PO number input
-  const handlePoNumberChange = (e) => setPoNumber(e.target.value);
-
-  // Function to generate a unique ID
-  const generateUniqueId = () => {
-    const timestamp = Date.now();
-    const randomNum = Math.floor(Math.random() * 10000);
-    return `${timestamp}${randomNum}`;
-  };
-
-  // Debounced part number autocomplete
+  // Autocomplete for part number
   const fetchSuggestions = useCallback(
     debounce(async (inputValue) => {
       try {
@@ -76,13 +84,12 @@ const QRCodeGenerator = () => {
         setSuggestions(data);
         setIsSuggestionsVisible(true);
       } catch (error) {
-        console.error("Error fetching suggestions:", error);
+        // ignore
       }
     }, 500),
     []
   );
 
-  // Function to handle part number input and fetch autocomplete suggestions
   const handlePartNumberChange = (e) => {
     const inputValue = e.target.value;
     setPartNumber(inputValue);
@@ -94,7 +101,6 @@ const QRCodeGenerator = () => {
     }
   };
 
-  // Handle key press (up/down arrows and Enter key)
   const handleKeyDown = (e) => {
     if (e.key === "ArrowDown") {
       setActiveSuggestionIndex((prev) =>
@@ -107,22 +113,17 @@ const QRCodeGenerator = () => {
     }
   };
 
-  // Handle suggestion selection by clicking or pressing Enter
   const selectSuggestion = (index) => {
     const selected = suggestions[index];
     setPartNumber(selected.part_number);
-    setQuantity(selected.quantity);
-    setIsSuggestionsVisible(false); // Hide suggestions after selection
+    setIsSuggestionsVisible(false);
     setActiveSuggestionIndex(-1);
   };
 
-  // Highlight matched part in suggestions (e.g., "HTV" in "HTV41-4399T")
   const highlightMatch = (text, match) => {
     if (!text || !match) return text;
-
     const regex = new RegExp(`(${match})`, "i");
     const parts = text.split(regex);
-
     return parts.map((part, index) =>
       regex.test(part) ? (
         <span key={index} className={styles.match}>
@@ -134,53 +135,51 @@ const QRCodeGenerator = () => {
     );
   };
 
-  // Function to validate input fields
   const validateInputs = () => {
     if (isNaN(quantity) || quantity <= 0) {
       setError("Quantity must be a positive number.");
       return false;
     }
-
     if (isNaN(copy) || copy <= 0) {
       setError("Copy must be a positive number.");
       return false;
     }
-
-    setError(""); // Clear any previous errors
+    if (!Inventory_ID) {
+      setError("Inventory ID must be filled.");
+      return false;
+    }
+    setError("");
     return true;
   };
 
   const canPrint = () => {
     return (
       isWorkerValid &&
-      (poNumber?.trim() || "") !== "" &&
-      (partNumber?.trim() || "") !== "" && // Use optional chaining
+      (Inventory_ID?.trim() || "") !== "" &&
+      (part_number?.trim() || "") !== "" &&
+      (warehouse_Id?.trim() || "") !== "" &&
       quantity > 0 &&
       copy > 0
     );
   };
 
   const handlePrint = () => {
-    if (!validateInputs()) {
-      return; // Do not proceed if inputs are not valid
-    }
+    if (!validateInputs()) return;
+
+    const time_submitted = new Date().toISOString();
 
     const printWindow = window.open("", "_blank");
-
     printWindow.document.write(`
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="viewport" content="width=80mm, initial-scale=1.0" />
         <title>Print QR Codes</title>
         <style>
-        html {
-          width: 80mm;
-          height: 80mm;
-        }
+        html { width: 80mm; height: 80mm; }
         body {
-          width: 80mm; /* Ensure the body width matches the thermal paper width */
+          width: 80mm;
           height: 80mm;
           margin: 0;
           padding: 0;
@@ -189,10 +188,70 @@ const QRCodeGenerator = () => {
           flex-direction: column;
           align-items: center;
         }
+        #print-root { width: 100%; height: 100%; }
+        </style>
+      </head>
+      <body>
+        <div id="print-root"></div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
 
+    const printRoot = printWindow.document.getElementById("print-root");
+    const root = createRoot(printRoot);
+
+    const templates = [];
+    for (let i = 0; i < copy; i++) {
+      templates.push(
+        <QRCodeTemplate
+          key={i}
+          Inventory_ID={Inventory_ID}
+          part_number={part_number}
+          quantity={quantity}
+          warehouse_Id={warehouse_Id}
+          workerBarcode={workerBarcode}
+          time_submitted={time_submitted}
+        />
+      );
+    }
+
+    root.render(<>{templates}</>);
+    printWindow.focus();
+    printWindow.print();
+  };
+
+  const handlePrintA4 = () => {
+    if (!validateInputs()) return;
+
+    const time_submitted = new Date().toISOString();
+
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=210mm, initial-scale=1.0" />
+        <title>Print QR Codes on A4</title>
+        <style>
+        @page { size: A4 landscape; margin: 1mm; }
+        body {
+          width: 210mm;
+          height: 297mm;
+          margin: 0;
+          padding: 0mm;
+          font-family: Arial, sans-serif;
+          box-sizing: border-box;
+        }
         #print-root {
-         width: 100%;
-         height: 100%;
+          width: 100%;
+          height: 100%;
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          grid-template-rows: repeat(4, 1fr);
+          gap: 1mm;
+          page-break-inside: avoid;
         }
         </style>
       </head>
@@ -201,110 +260,34 @@ const QRCodeGenerator = () => {
       </body>
       </html>
     `);
-
     printWindow.document.close();
 
     const printRoot = printWindow.document.getElementById("print-root");
-    const root = createRoot(printRoot); // Initialize React in the print window
+    const root = createRoot(printRoot);
 
     const templates = [];
     for (let i = 0; i < copy; i++) {
-      const uniqueId = generateUniqueId();
-      templates.push(
-        <QRCodeTemplate
-          key={i}
-          poNumber={poNumber}
-          partNumber={partNumber}
-          quantity={quantity}
-          uniqueId={uniqueId}
-          workerBarcode={workerBarcode}
-        />
-      );
-    }
-
-    root.render(<>{templates}</>); // Render all templates within the print window
-
-    // Trigger the print
-    printWindow.focus();
-    printWindow.print();
-  };
-
-  const handlePrintA4 = () => {
-    if (!validateInputs()) {
-      return; // Do not proceed if inputs are not valid
-    }
-
-    const printWindow = window.open("", "_blank");
-
-    printWindow.document.write(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Print QR Codes on A4</title>
-      <style>
-      @page {
-        size: A4 landscape; /* Change this if you're using a different paper size */
-        margin: 1mm;
-      }
-      body {
-        width: 210mm; /* A4 paper width */
-        height: 297mm; /* A4 paper height */
-        margin: 0;
-        padding: 0mm; 
-        font-family: Arial, sans-serif;
-        box-sizing: border-box;
-      }
-
-      #print-root {
-        width: 100%; 
-        height: 100%; 
-        display: grid;
-        grid-template-columns: repeat(6, 1fr); /* 6 columns per row */
-        grid-template-rows: repeat(4, 1fr); /* Four rows to fit 3x4 layout */
-        gap: 1mm;
-        page-break-inside: avoid;
-      }
-      </style>
-    </head>
-    <body>
-      <div id="print-root"></div>
-    </body>
-    </html>
-  `);
-
-    printWindow.document.close();
-
-    const printRoot = printWindow.document.getElementById("print-root");
-    const root = createRoot(printRoot); // Initialize React in the print window
-
-    const templates = [];
-    for (let i = 0; i < copy; i++) {
-      // 12 QR Codes for 3x4 grid
-      const uniqueId = generateUniqueId();
       templates.push(
         <QRCodeTemplateA4
           key={i}
-          poNumber={poNumber}
-          partNumber={partNumber}
+          Inventory_ID={Inventory_ID}
+          part_number={part_number}
           quantity={quantity}
-          uniqueId={uniqueId}
-          workerBarcode={workerBarcode} // Pass the worker barcode to the A4 template
+          warehouse_Id={warehouse_Id}
+          workerBarcode={workerBarcode}
+          time_submitted={time_submitted}
         />
       );
     }
 
-    root.render(<>{templates}</>); // Render all templates within the print window
-
-    // Trigger the print
+    root.render(<>{templates}</>);
     printWindow.focus();
     printWindow.print();
   };
 
   return (
     <div className={styles.container}>
-      {/* Worker Barcode Field */}
+      {/* Worker Barcode */}
       <div className={styles.formGroup}>
         <label className={styles.label}>Worker Barcode:</label>
         <input
@@ -314,31 +297,28 @@ const QRCodeGenerator = () => {
           className={styles.input}
         />
       </div>
-
-      {/* PO Number Field */}
+      {/* Inventory ID */}
       <div className={styles.formGroup}>
-        <label className={styles.label}>PO Number:</label>
+        <label className={styles.label}>Inventory ID:</label>
         <input
           type="text"
-          value={poNumber}
-          onChange={handlePoNumberChange}
+          value={Inventory_ID}
           className={styles.input}
-          disabled={!isWorkerValid}
+          readOnly
+          disabled
         />
       </div>
-
-      {/* Part Number Field with Autocomplete */}
+      {/* Part Number */}
       <div className={styles.formGroup}>
         <label className={styles.label}>Part Number:</label>
         <input
           type="text"
-          value={partNumber}
+          value={part_number}
           onChange={handlePartNumberChange}
           onKeyDown={handleKeyDown}
           className={styles.input}
           disabled={!isWorkerValid}
         />
-
         {suggestions.length > 0 && isSuggestionsVisible && (
           <ul className={styles.suggestionsList} role="listbox">
             {suggestions.map((item, index) => (
@@ -353,43 +333,50 @@ const QRCodeGenerator = () => {
               >
                 {highlightMatch(
                   item.part_number || "Not Found",
-                  partNumber || ""
+                  part_number || ""
                 )}
               </li>
             ))}
           </ul>
         )}
       </div>
-
-      {/* Quantity Field */}
+      {/* Quantity */}
       <div className={styles.formGroup}>
         <label className={styles.label}>Quantity:</label>
         <input
           type="number"
           value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
+          onChange={(e) => setQuantity(Number(e.target.value))}
           min="1"
           className={styles.input}
           disabled={!isWorkerValid}
         />
       </div>
-
-      {/* Copy Field */}
+      {/* Warehouse ID */}
+      <div className={styles.formGroup}>
+        <label className={styles.label}>Warehouse ID:</label>
+        <input
+          type="text"
+          value={warehouse_Id}
+          onChange={(e) => setWarehouse_Id(e.target.value)}
+          className={styles.input}
+          disabled={!isWorkerValid}
+        />
+      </div>
+      {/* Copy */}
       <div className={styles.formGroup}>
         <label className={styles.label}>Copy:</label>
         <input
           type="number"
           value={copy}
-          onChange={(e) => setCopy(e.target.value)}
+          onChange={(e) => setCopy(Number(e.target.value))}
           min="1"
           className={styles.input}
           disabled={!isWorkerValid}
         />
       </div>
-
-      {/* Error Display */}
+      {/* Error */}
       {error && <p className={styles.error}>{error}</p>}
-
       {/* Print Buttons */}
       <div className={styles.buttonGroup}>
         <button

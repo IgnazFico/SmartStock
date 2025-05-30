@@ -1,0 +1,40 @@
+.tableContainer {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dataTable th,
+.dataTable td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.dataTable th {
+  background-color: #f1f1f1;
+  font-weight: bold;
+  position: sticky; /* Keeps the header row fixed while scrolling */
+  top: 0;
+  z-index: 2;
+}
+
+.dataTable tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.dataTable tbody tr:hover {
+  background-color: #e2e2e2a8;
+}
+
+.dataTable th,
+.dataTable td {
+  min-width: 100px; /* Ensures columns are wide enough for readability */
+}

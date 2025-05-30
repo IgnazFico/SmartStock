@@ -78,3 +78,26 @@
   filter: invert(5%) sepia(14%) saturate(15%) hue-rotate(319deg)
     brightness(104%) contrast(82%);
 }
+.dropdown {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 10px;
+  padding-left: 10px;
+
+}
+
+.dropdownMenu {
+  list-style: none;
+  padding-left: 20px;
+  margin-top: 5px;
+}
+
+.dropdownMenu li {
+  padding: 5px 0;
+}
+
+.dropdownMenu li a {
+  text-decoration: none;
+  color: white;
+}

@@ -10,6 +10,7 @@ import { format, endOfDay } from "date-fns";
 import debounce from "lodash/debounce";
 import styles from "./styles.module.css";
 
+
 const Table = React.lazy(() => import("../../components/Table"));
 
 // Columns configuration for react-table including PO Number column
@@ -17,12 +18,18 @@ const columns = [
   {
     Header: "Time",
     accessor: "time_updated",
-    Cell: ({ value }) => format(new Date(value), "MM/dd HH:mm"), // Format the date
+    Cell: ({ value }) => {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? "Invalid date" : format(date, "MM/dd HH:mm");
+    },
   },
   {
     Header: "First Scan",
     accessor: "timeSubmitted",
-    Cell: ({ value }) => format(new Date(value), "MM/dd HH:mm"), // Format the date
+    Cell: ({ value }) => {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? "Invalid date" : format(date, "MM/dd HH:mm");
+    },
   },
   {
     Header: "LOCATOR",
@@ -45,6 +52,7 @@ const columns = [
     accessor: "record_id",
   },
 ];
+
 
 const LogMenu = () => {
   const [dateRange, setDateRange] = useState([null, null]); // State to manage date range

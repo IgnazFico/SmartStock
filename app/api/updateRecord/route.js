@@ -15,7 +15,7 @@ export async function POST(req) {
 
     // Fetch the existing record from printec_wh
     const existingRecord = await db
-      .collection("printec_wh")
+      .collection("inv_finish_good")
       .findOne({ _id: recordId });
 
     if (!existingRecord) {
@@ -38,11 +38,11 @@ export async function POST(req) {
     }
 
     await db
-      .collection("printec_wh")
+      .collection("inv_finish_good")
       .updateOne({ _id: recordId }, { $set: { qty: newQty } });
 
     // Log the throw operation in printec_wh_log
-    await db.collection("printec_wh_log").insertOne({
+    await db.collection("wh_log").insertOne({
       record_id: recordId,
       qty_updated: qtyToThrow, // The quantity that was thrown
       time_updated: formatTimestamp(), // Time of the throw

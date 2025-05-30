@@ -1,119 +1,148 @@
 import { NextResponse } from "next/server";
 import connect from "../../../utils/db";
 
+function getValidTimestamp(input) {
+  const date = input ? new Date(input) : new Date();
+  return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+}
+
 export async function POST(req) {
   try {
-    const records = await req.json(); // Get the records from the request body
+    // Ambil dan validasi payload
+    const body = await req.json();
+    const records = body.records;
+    if (!Array.isArray(records)) {
+      return NextResponse.json(
+        { message: "Payload harus berupa { records: [...] }" },
+        { status: 400 }
+      );
+    }
+
     const db = await connect();
 
-    function formatTimestamp() {
-      const date = new Date();
-      return date.toISOString(); // Returns timestamp in ISO 8601 format
-    }
+    // Ambil semua locator kategori finish_good dari master (sekali saja)
+    const fgLocators = await db.collection("locator_master")
+      .find({ category: "finish_good" })
+      .map(l => l.locator)
+      .toArray();
 
     for (let record of records) {
-      const { id, locator, qty, ...rest } = record;
-      let _id;
+      const {
+        id,
+        Inventory_ID,
+        warehouse_Id = "wh_fg",
+        part_number,
+        quantity,
+        locator,
+        worker_barcode = "",
+      } = record;
+      const _id = id;
+      const timeSubmitted = getValidTimestamp(record.time_updated);
 
-      if (id) {
-        _id = id;
-      } else {
-        console.warn(`Invalid ID: ${id}, already in use.`);
+      let invTimeSubmittedForLog = null;
+      let finishGoodId = null;
+
+      // === VALIDASI LOCATOR ===
+      console.log("Locator dari user:", locator);
+      console.log("Daftar locator valid:", fgLocators);
+      if (
+        locator !== "OUT" &&
+        !fgLocators.map(l => l.toLowerCase().trim()).includes(locator.toLowerCase().trim())
+      ) {
         return NextResponse.json(
-          { message: `Invalid ID: ${id}.` },
+          { message: `Locator ${locator} tidak valid untuk kategori finish_good!` },
           { status: 400 }
         );
       }
+      // === END VALIDASI ===
 
-      // Check if item exists in printec_wh
-      const existingRecord = await db.collection("printec_wh").findOne({ _id });
+      if (locator !== "OUT") {
+        // Barang masuk ke rak/locator tertentu
+        const existingFG = await db.collection("inv_finish_good").findOne({
+          Inventory_ID,
+          warehouse_Id,
+          part_number,
+          locator,
+        });
 
-      if (existingRecord) {
-        // If item exists, check if it's being moved or removed
-        const originalTimeSubmitted =
-          existingRecord.timeSubmitted || formatTimestamp(); // Get the original time or current if it's new
+        if (existingFG) {
+          const newQty = (existingFG.quantity || 0) + quantity;
+          await db.collection("inv_finish_good").updateOne(
+            { _id: existingFG._id },
+            { $set: { quantity: newQty, time_updated: timeSubmitted } }
+          );
+          finishGoodId = existingFG._id; // <-- Ambil _id dari data yang sudah ada
+          invTimeSubmittedForLog = existingFG.time_submitted;
+        } else {
+          // Insert new record
+          const insertResult = await db.collection("inv_finish_good").insertOne({
+            Inventory_ID,
+            warehouse_Id: "wh_fg",
+            part_number,
+            quantity,
+            locator,
+            time_submitted: timeSubmitted,
+            time_updated: timeSubmitted,
+          });
+          finishGoodId = insertResult.insertedId; // <-- Ambil _id dari hasil insert
+          invTimeSubmittedForLog = timeSubmitted;
+        }
+      } else {
+        // Barang keluar dari rak/locator kategori finish_good
+        let qtyToReduce = quantity;
+        const cursor = db.collection("inv_finish_good").find({
+          Inventory_ID,
+          warehouse_Id,
+          part_number,
+          locator: { $in: fgLocators },
+        }).sort({ quantity: -1 });
 
-        // Get the actual quantity in the warehouse
-        const actualQuantity = existingRecord.qty;
+        while (qtyToReduce > 0 && await cursor.hasNext()) {
+          const row = await cursor.next();
+          if (!row) break;
+          const availableQty = row.quantity || 0;
 
-        if (existingRecord.locator !== locator) {
-          // If the new locator is "OUT", remove the item from printec_wh
-          if (locator === "OUT") {
-            // Remove the item from printec_wh
-            await db.collection("printec_wh").deleteOne({ _id });
+          if (invTimeSubmittedForLog === null) {
+            invTimeSubmittedForLog = row.time_submitted;
+          }
 
-            // Log the removal in printec_wh_log
-            await db.collection("printec_wh_log").insertOne({
-              record_id: _id,
-              qty_updated: actualQuantity, // Log the actual quantity, not the scanned quantity
-              time_updated: formatTimestamp(), // Time of removal
-              loc_updated: `${existingRecord.locator} -> OUT`,
-              action: "removed", // Removal action
-              timeSubmitted: originalTimeSubmitted, // Preserve the original submission time
-              ...rest,
-            });
-
-            continue; // Move to the next record
+          if (availableQty > qtyToReduce) {
+            await db.collection("inv_finish_good").updateOne(
+              { _id: row._id },
+              { $set: { quantity: availableQty - qtyToReduce, time_updated: timeSubmitted } }
+            );
+            qtyToReduce = 0;
+            finishGoodId = row._id; // <-- Ambil _id dari row yang diupdate
           } else {
-            // Move the item to the new locator
-            await db
-              .collection("printec_wh")
-              .updateOne({ _id }, { $set: { locator } });
-
-            // Log the locator change in printec_wh_log
-            await db.collection("printec_wh_log").insertOne({
-              record_id: _id,
-              qty_updated: actualQuantity, // Log the actual quantity, not the scanned quantity
-              time_updated: formatTimestamp(), // Time of movement
-              loc_updated: `${existingRecord.locator} -> ${locator}`,
-              action: "moved", // Move action
-              timeSubmitted: originalTimeSubmitted, // Preserve the original submission time
-              ...rest,
-            });
-
-            continue; // Skip to the next record since the locator was updated
+            await db.collection("inv_finish_good").deleteOne({ _id: row._id });
+            qtyToReduce -= availableQty;
+            finishGoodId = row._id; // <-- Ambil _id dari row yang dihapus
           }
         }
-
-        return NextResponse.json(
-          {
-            message: `Item with ID ${id} already exists in locator ${locator}.`,
-          },
-          { status: 400 }
-        );
       }
 
-      // If the item is new (not found in printec_wh), insert it and log the new entry
-      const timeSubmitted = formatTimestamp(); // Capture the first scan time
-
-      await db.collection("printec_wh").insertOne({
-        _id,
-        locator,
-        qty,
-        timeSubmitted, // Store the first scan time in the printec_wh collection
-        ...rest,
-      });
-
-      // Log the new item submission in printec_wh_log
+      // Log
       await db.collection("printec_wh_log").insertOne({
+        finish_good_id: finishGoodId, // <-- Simpan _id dari inv_finish_good
         record_id: _id,
-        qty_updated: qty,
-        time_updated: timeSubmitted, // Time of first submission
+        Inventory_ID,
+        warehouse_Id,
+        part: part_number,
+        qty_updated: quantity,
         loc_updated: locator,
-        action: "submitted", // New submission action
-        timeSubmitted, // Keep track of the first submission time in the log as well
-        ...rest,
+        worker_barcode,
+        time_updated: timeSubmitted,
+        timeSubmitted: invTimeSubmittedForLog,
+        action: locator === "OUT" ? "out" : "in",
       });
     }
 
-    return NextResponse.json(
-      { message: "Records submitted successfully!" },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: "Submit berhasil." }, { status: 200 });
+
   } catch (error) {
-    console.error("Database insertion error:", error);
+    console.error("Submit record error:", error);
     return NextResponse.json(
-      { message: "Failed to submit records.", error: error.message },
+      { message: "Gagal submit record.", error: error.message },
       { status: 500 }
     );
   }
