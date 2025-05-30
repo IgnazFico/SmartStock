@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import styles from "./styles.module.css"; // ⬅️ new CSS module
+import styles from "./styles.module.css";
 
 export default function ProductionOrders() {
   const router = useRouter();
@@ -9,7 +9,7 @@ export default function ProductionOrders() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/productionOrderList")
+    fetch("/api/productionOrderList", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         setOrders(data);
@@ -26,7 +26,7 @@ export default function ProductionOrders() {
   };
 
   const handleCreate = () => {
-    router.push("/production-orders/create"); // 🔁 adjust path if needed
+    router.push("/production-orders/create");
   };
 
   return (

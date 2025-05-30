@@ -1,8 +1,9 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import StockLevelChart from "@/components/StockLevelChart";
+import styles from "./dashboard.module.css";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -13,48 +14,37 @@ export default function Dashboard() {
     return <p>Loading...</p>;
   }
 
-  // If no session is found, redirect to login page
   if (!session) {
-    router.push("/auth"); // Redirect to the login page
-    return null; // Prevent rendering before redirect
-  }
-
-  // Function to handle logout
-  function logoutHandler() {
-    signOut(); // Sign the user out
+    router.push("/auth");
+    return null;
   }
 
   return (
-    <div>
-      <h1>Welcome, {session.user.name}!</h1>
-      <p>Your role is: {session.user.role}</p>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <p className={styles.welcome}>Welcome, {session.user.name}!</p>
+        <p className={styles.roleInfo}>Your role is: {session.user.role}</p>
+      </div>
 
-      {/* Render additional information based on user role */}
-      {session.user.role === "super" && (
-        <div>
-          <h1>Dashboard</h1>
-          <h2>Super User Actions</h2>
-          <p>You have access to admin features.</p>
-          <div>
-            <h1>Stock Level Dashboard</h1>
+      {session.user.role === "admin" && (
+        <div className={styles.card}>
+          <h2>Admin Dashboard</h2>
+          <p>You have access to administrative functions and analytics.</p>
+          <div className={styles.chartWrapper}>
             <StockLevelChart />
           </div>
         </div>
       )}
 
       {session.user.role === "normal" && (
-        <div>
-          <h2>Normal User Actions</h2>
-          <p>You have access to normal user features.</p>
-          <div>
-            <h1>Stock Level Dashboard</h1>
+        <div className={styles.card}>
+          <h2>User Dashboard</h2>
+          <p>You have access to operational insights and materials data.</p>
+          <div className={styles.chartWrapper}>
             <StockLevelChart />
           </div>
         </div>
       )}
-
-      {/* Logout button */}
-      <button onClick={logoutHandler}>Logout</button>
     </div>
   );
 }

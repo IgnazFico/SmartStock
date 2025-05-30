@@ -1,14 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import styles from "./NavBar.module.css";
 import { signOut } from "next-auth/react";
 
 export default function NavBar() {
-  const { data: session, status } = useSession(); // Get session and status
-  const loading = status === "loading"; // Check if the session is loading
+  const { data: session, status } = useSession();
+  const loading = status === "loading";
 
-  const role = session?.user?.role; // Check if the user is a super user
+  const role = session?.user?.role;
+  const [isInventoryOpen, setInventoryOpen] = useState(false);
+  const [isScanOpen, setScanOpen] = useState(false);
+  const [isPrintOpen, setPrintOpen] = useState(false);
+  const [isPurchaseOpen, setPurchaseOpen] = useState(false);
 
   function handleLogOut() {
     signOut();
@@ -24,10 +29,26 @@ export default function NavBar() {
         <hr className={styles.rounded}></hr>
         <ul className={styles.list}>
           <li>
-            <a href="/scan">
+            <div
+              className={styles.dropdown}
+              onClick={() => setScanOpen(!isScanOpen)}
+            >
               <img src="/scan-svgrepo-com.svg" alt="Scan" />
               Scan
-            </a>
+            </div>
+            {isScanOpen && (
+              <ul className={styles.dropdownMenu}>
+                <li>
+                  <a href="/scan/scan_fg">Scan FG</a>
+                </li>
+                <li>
+                  <a href="/scan/scan_prd">Scan Production</a>
+                </li>
+                <li>
+                  <a href="/scan/scan_rm">Scan RM</a>
+                </li>
+              </ul>
+            )}
           </li>
           <li>
             <a href="/log">
@@ -36,36 +57,84 @@ export default function NavBar() {
             </a>
           </li>
           <li>
-            <a href="/inventory">
+            <div
+              className={styles.dropdown}
+              onClick={() => setInventoryOpen(!isInventoryOpen)}
+            >
               <img src="/inventory_icon.png" alt="Inventory" />
               Inventory
-            </a>
+            </div>
+            {isInventoryOpen && (
+              <ul className={styles.dropdownMenu}>
+                <li>
+                  <a href="/inventory/rm">Raw Material Warehouse</a>
+                </li>
+                <li>
+                  <a href="/inventory/wip_inventory">Production Warehouse</a>
+                </li>
+                <li>
+                  <a href="/inventory/fg">Finished Goods Warehouse</a>
+                </li>
+              </ul>
+            )}
           </li>
           <li>
-            <a href="/print">
+            <div
+              className={styles.dropdown}
+              onClick={() => setPrintOpen(!isPrintOpen)}
+            >
               <img src="/print-svgrepo-com.svg" alt="Print" />
               Print
-            </a>
+            </div>
+            {isPrintOpen && (
+              <ul className={styles.dropdownMenu}>
+                <li>
+                  <a href="/print/print_fg">Print QR FG</a>
+                </li>
+                <li>
+                  <a href="/print/print_prd">Print QR Production</a>
+                </li>
+                <li>
+                  <a href="/print/print_rm">Print QR RM</a>
+                </li>
+              </ul>
+            )}
           </li>
           <li>
             <a href="/production">
-              <img src="" alt="Production" />
-              Production
+              <img src="/production-order.svg" alt="Production" />
+              Production Order
             </a>
           </li>
           <li>
             <a href="/production-tracking">
-              <img src="" alt="Production Tracking" />
+              <img src="/production-tracking.svg" alt="Production Tracking" />
               Production Tracking
             </a>
           </li>
           <li>
-            <a href="/purchasing">
-              <img src="" alt="Purchasing" />
-              Purchasing
-            </a>
+            <div
+              className={styles.dropdown}
+              onClick={() => setPurchaseOpen(!isPurchaseOpen)}
+            >
+              <img src="/purchase.svg" alt="Purchase" />
+              Purchase
+            </div>
+            {isPurchaseOpen && (
+              <ul className={styles.dropdownMenu}>
+                <li>
+                  <a href="/pr">Purchase Request</a>
+                </li>
+                <li>
+                  <a href="/po">Purchase Order</a>
+                </li>
+                <li>
+                  <a href="/receiving">Receiving</a>
+                </li>
+              </ul>
+            )}
           </li>
-          {(role === "super" || role === "admin") && (
+          {role === "admin" && (
             <li>
               <a href="auth/register">
                 <img src="/add-user-svgrepo-com.svg" alt="Register" />
@@ -73,7 +142,7 @@ export default function NavBar() {
               </a>
             </li>
           )}
-          {(role === "super" || role === "admin") && (
+          {role === "admin" && (
             <li>
               <a href="/master_data">
                 <img src="/master-data.png" alt="Master Data" />

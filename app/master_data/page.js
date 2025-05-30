@@ -17,17 +17,9 @@ export default function InsertMasterData() {
   const [isItemModalOpen, setItemModalOpen] = useState(false);
   const [isLocatorModalOpen, setLocatorModalOpen] = useState(false);
 
-  // Columns for tables
-  const itemMasterColumns = [
-    "part_number",
-    "description",
-    "quantity",
-    "supplier",
-    "customer",
-  ];
-  const locatorColumns = ["locator"];
+  const itemMasterColumns = ["item_id", "part_number", "description"];
+  const locatorColumns = ["locator", "warehouse"];
 
-  // Fetch data from APIs (replace with actual fetch URLs)
   useEffect(() => {
     const fetchItemMaster = async () => {
       const response = await fetch("/api/itemMaster");
@@ -50,23 +42,19 @@ export default function InsertMasterData() {
       fetchLocator();
     }, 5000);
 
-    // Clear interval on unmount
     return () => clearInterval(interval);
   }, []);
 
-  // Handle adding new item
   const handleAddItem = (formData) => {
-    const { part_number, description, quantity, supplier, customer } = formData;
+    const { item_id, part_number, description } = formData;
 
     fetch("/api/insertItem", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        item_id,
         part_number,
         description,
-        quantity,
-        supplier,
-        customer,
       }),
     })
       .then((res) => res.json())
@@ -79,12 +67,12 @@ export default function InsertMasterData() {
 
   // Handle adding new locator
   const handleAddLocator = (formData) => {
-    const { locator } = formData;
+    const { locator, warehouse } = formData;
 
     fetch("/api/insertLocator", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ locator }),
+      body: JSON.stringify({ locator, warehouse }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -94,14 +82,13 @@ export default function InsertMasterData() {
       });
   };
 
-  // Functions to open modals and close the other if it's open
   const openItemModal = () => {
-    setLocatorModalOpen(false); // Close locator modal if open
+    setLocatorModalOpen(false);
     setItemModalOpen(true);
   };
 
   const openLocatorModal = () => {
-    setItemModalOpen(false); // Close item modal if open
+    setItemModalOpen(false);
     setLocatorModalOpen(true);
   };
 

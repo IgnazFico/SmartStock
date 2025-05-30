@@ -45,10 +45,22 @@
   font-size: 14px;
 }
 
+.success {
+  color: green;
+  background-color: #e7f9e7;
+  padding: 0.5rem;
+  border: 1px solid green;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
 .error {
   color: red;
-  text-align: center;
-  margin-bottom: 10px;
+  background-color: #ffe6e6;
+  padding: 0.5rem;
+  border: 1px solid red;
+  border-radius: 4px;
+  margin-bottom: 1rem;
 }
 
 .submitButton {
@@ -90,4 +102,9 @@
 .submitButton:active {
   box-shadow: none;
   transform: translateY(0);
+}
+
+.barcodeFormContainer {
+  margin-top: 2rem;
+  border-top: 1px solid #6d6d6d;
 }

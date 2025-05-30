@@ -4,7 +4,7 @@ import connect from "../../../utils/db";
 export async function POST(req) {
   try {
     // Get the locator from the request body
-    const { locator } = await req.json();
+    const { locator, warehouse } = await req.json();
     const db = await connect();
 
     // Check if the locator already exists in the database
@@ -22,7 +22,7 @@ export async function POST(req) {
       // Locator is unique, proceed with insertion
       const result = await db
         .collection("locator_master")
-        .insertOne({ locator });
+        .insertOne({ locator, warehouse });
 
       return NextResponse.json({
         success: true,

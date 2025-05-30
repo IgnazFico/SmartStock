@@ -14,6 +14,10 @@ export async function POST(req) {
       .collection("production_order")
       .updateOne({ prod_order_ID }, { $set: { status: "In Progress" } });
 
+    await db
+      .collection("production_tracking")
+      .updateOne({ prod_order_ID }, { $set: { status: "In Progress" } });
+
     return NextResponse.json({ message: "Production started" });
   } catch (err) {
     console.error("Failed to start production:", err);
