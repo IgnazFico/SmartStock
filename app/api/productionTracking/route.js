@@ -18,7 +18,7 @@ export async function POST(req) {
       } = entry;
 
       return db.collection("production_tracking").insertOne({
-        prod_order_id,
+        prod_order_ID: prod_order_id,
         process_id,
         input_quantity: Number(input_quantity),
         output_quantity: Number(output_quantity),
@@ -33,7 +33,7 @@ export async function POST(req) {
     await db
       .collection("production_tracking")
       .updateMany(
-        { prod_order_id: payload[0].prod_order_id },
+        { prod_order_ID: payload[0].prod_order_id },
         { $set: { status: "Completed" } }
       );
 

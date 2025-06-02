@@ -1,5 +1,5 @@
 import { useState } from "react";
-import styles from "./RegisterForm.module.css"; // Assuming you have custom styles here
+import styles from "./RegisterForm.module.css";
 import { useRouter } from "next/navigation";
 
 const RegisterForm = () => {
@@ -18,8 +18,11 @@ const RegisterForm = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [barcodeMessage, setBarcodeMessage] = useState("");
+  const [barcodeError, setBarcodeError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter(); // Next.js router for navigation after registration
+
+  const router = useRouter();
 
   // Handle input changes
   const handleChange = (e) => {
@@ -67,27 +70,6 @@ const RegisterForm = () => {
       if (!registerRes.ok) {
         throw new Error(
           registerData.message || "An error occurred during registration."
-        );
-      }
-
-      // Call the barcode insertion API
-      const barcodeRes = await fetch("/api/insertBarcode", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          barcode: formData.barcode,
-        }),
-      });
-
-      const barcodeData = await barcodeRes.json();
-
-      if (!barcodeRes.ok) {
-        throw new Error(
-          barcodeData.message ||
-            "An error occurred while inserting the barcode."
         );
       }
 
@@ -153,6 +135,8 @@ const RegisterForm = () => {
             >
               <option value="warehouse">Warehouse</option>
               <option value="production">Production</option>
+              <option value="purchasing">Purchasing</option>
+              <option value="planner">Planner</option>
             </select>
           </div>
 
@@ -168,7 +152,6 @@ const RegisterForm = () => {
               <option value="staff">Staff</option>
               <option value="supervisor">Supervisor</option>
               <option value="leader">Leader</option>
-              <option value="manager">Manager</option>
             </select>
           </div>
 
@@ -179,18 +162,6 @@ const RegisterForm = () => {
               type="text"
               name="NIK"
               value={formData.NIK}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          {/* Barcode */}
-          <div className={styles.formGroup}>
-            <label htmlFor="barcode">Barcode:</label>
-            <input
-              type="text"
-              name="barcode"
-              value={formData.barcode}
               onChange={handleChange}
               required
             />
@@ -269,6 +240,55 @@ const RegisterForm = () => {
           </button>
         </div>
       </form>
+      {/* New Barcode Form Section */}
+      <div className={styles.barcodeFormContainer}>
+        <h3>Add New Barcode</h3>
+        {barcodeMessage && <p className={styles.success}>{barcodeMessage}</p>}
+        {barcodeError && <p className={styles.error}>{barcodeError}</p>}
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const name = e.target.barcodeName.value.trim();
+            const barcode = e.target.barcodeValue.value.trim();
+
+            if (!name || !barcode) {
+              setBarcodeError("Name and barcode are required.");
+              return;
+            }
+
+            try {
+              const res = await fetch("/api/insertBarcode", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ name, barcode }),
+              });
+
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.message);
+              setBarcodeMessage("Barcode added successfully!");
+              e.target.reset();
+            } catch (err) {
+              setBarcodeError("Failed to add barcode: " + err.message);
+            }
+          }}
+        >
+          <div className={styles.formGroup}>
+            <label htmlFor="barcodeName">Name:</label>
+            <input type="text" name="barcodeName" required />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="barcodeValue">Barcode:</label>
+            <input type="text" name="barcodeValue" required />
+          </div>
+          <div className={styles.formGroup}>
+            <button type="submit" className={styles.submitButton}>
+              Add Barcode
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

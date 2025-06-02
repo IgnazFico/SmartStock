@@ -8,13 +8,14 @@ import { signOut } from "next-auth/react";
 export default function NavBar() {
   const { data: session, status } = useSession();
   const loading = status === "loading";
-  const role = session?.user?.role;
 
+  const role = session?.user?.role;
   const [isInventoryOpen, setInventoryOpen] = useState(false);
   const [isScanOpen, setScanOpen] = useState(false);
   const [isPrintOpen, setPrintOpen] = useState(false);
+  const [isPurchaseOpen, setPurchaseOpen] = useState(false);
 
-  function handleLogOut() {   
+  function handleLogOut() {
     signOut();
   }
 
@@ -34,7 +35,6 @@ export default function NavBar() {
             >
               <img src="/scan-svgrepo-com.svg" alt="Scan" />
               Scan
-
             </div>
             {isScanOpen && (
               <ul className={styles.dropdownMenu}>
@@ -54,7 +54,6 @@ export default function NavBar() {
             <a href="/log">
               <img src="/log-svgrepo-com.svg" alt="Log" />
               Log
-
             </a>
           </li>
           <li>
@@ -63,8 +62,7 @@ export default function NavBar() {
               onClick={() => setInventoryOpen(!isInventoryOpen)}
             >
               <img src="/inventory_icon.png" alt="Inventory" />
-              Inventaris
-
+              Inventory
             </div>
             {isInventoryOpen && (
               <ul className={styles.dropdownMenu}>
@@ -87,37 +85,68 @@ export default function NavBar() {
             >
               <img src="/print-svgrepo-com.svg" alt="Print" />
               Print
-
             </div>
             {isPrintOpen && (
               <ul className={styles.dropdownMenu}>
                 <li>
-                  <a href="/print/print_fg">Print FG</a>
+                  <a href="/print/print_fg">Print QR FG</a>
                 </li>
                 <li>
-                  <a href="/print/print_prd">Print Production</a>
+                  <a href="/print/print_prd">Print QR Production</a>
                 </li>
                 <li>
-                  <a href="/print/print_rm">Print RM</a>
+                  <a href="/print/print_rm">Print QR RM</a>
                 </li>
               </ul>
             )}
           </li>
-          {(role === "super" || role === "admin") && (
+          <li>
+            <a href="/production">
+              <img src="/production-order.svg" alt="Production" />
+              Production Order
+            </a>
+          </li>
+          <li>
+            <a href="/production-tracking">
+              <img src="/production-tracking.svg" alt="Production Tracking" />
+              Production Tracking
+            </a>
+          </li>
+          <li>
+            <div
+              className={styles.dropdown}
+              onClick={() => setPurchaseOpen(!isPurchaseOpen)}
+            >
+              <img src="/purchase.svg" alt="Purchase" />
+              Purchase
+            </div>
+            {isPurchaseOpen && (
+              <ul className={styles.dropdownMenu}>
+                <li>
+                  <a href="/pr">Purchase Request</a>
+                </li>
+                <li>
+                  <a href="/po">Purchase Order</a>
+                </li>
+                <li>
+                  <a href="/receiving">Receiving</a>
+                </li>
+              </ul>
+            )}
+          </li>
+          {role === "admin" && (
             <li>
               <a href="/auth/register">
                 <img src="/add-user-svgrepo-com.svg" alt="Register" />
-              Daftar
-
+                Daftar
               </a>
             </li>
           )}
-          {(role === "super" || role === "admin") && (
+          {role === "admin" && (
             <li>
               <a href="/master_data">
                 <img src="/master-data.png" alt="Master Data" />
-              Data Utama
-
+                Data Utama
               </a>
             </li>
           )}
@@ -125,7 +154,6 @@ export default function NavBar() {
             <a onClick={handleLogOut} href="/auth">
               <img src="/login-svgrepo-com.svg" alt="Logout Icon" />
               Keluar
-
             </a>
           </li>
         </ul>

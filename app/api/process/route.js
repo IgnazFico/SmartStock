@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import connect from "../../../utils/db"; // Make sure this is your MongoDB connection
+import connect from "../../../utils/db";
 
 export async function GET(req) {
   try {

@@ -23,18 +23,39 @@ export default function ProductionTrackingForm({ prodOrderId }) {
 
         const stepRes = await fetch(`/api/process?item_id=${order.item_id}`);
         const steps = await stepRes.json();
-
         setProcessSteps(steps);
 
-        setFormData(
-          steps.map((step) => ({
-            process_id: step.process_ID,
-            input_quantity: 0,
-            output_quantity: 0,
-            status: "Planned",
-            remarks: "",
-          }))
-        );
+        if (order.status === "In Progress" || order.status === "Completed") {
+          const trackingRes = await fetch(
+            `/api/productionTracking/${prodOrderId}`
+          );
+          const trackingData = await trackingRes.json();
+
+          // Set status from tracking
+          setOrderStatus(trackingData.status || order.status);
+
+          // Populate formData as a single-element array
+          setFormData([
+            {
+              process_id: trackingData.process_id,
+              input_quantity: trackingData.input_quantity,
+              output_quantity: trackingData.output_quantity,
+              status: trackingData.status,
+              remarks: trackingData.remarks,
+            },
+          ]);
+        } else {
+          // Otherwise, initialize fresh
+          setFormData(
+            steps.map((step) => ({
+              process_id: step.process_ID,
+              input_quantity: 0,
+              output_quantity: 0,
+              status: "Planned",
+              remarks: "",
+            }))
+          );
+        }
       } catch (err) {
         console.error("Error loading tracking data:", err);
       } finally {
@@ -114,7 +135,7 @@ export default function ProductionTrackingForm({ prodOrderId }) {
         </button>
       )}
 
-      {orderStatus === "In Progress" && (
+      {(orderStatus === "In Progress" || orderStatus === "Completed") && (
         <form onSubmit={handleSubmit}>
           {formData.length === 0 && (
             <p style={{ marginTop: "1rem", color: "gray" }}>
@@ -125,37 +146,39 @@ export default function ProductionTrackingForm({ prodOrderId }) {
           {formData.map((step, idx) => (
             <div className={styles.card} key={idx}>
               <h4>
-                Step {idx + 1}:{" "}
-                {processSteps[idx]?.process_name || "Unnamed Step"}
+                Process: {processSteps[idx]?.process_name || "Unnamed Step"}
               </h4>
 
               <label>Input Quantity</label>
               <input
                 type="number"
-                placeholder="Input Quantity"
                 value={step.input_quantity}
+                disabled={orderStatus === "Completed"}
                 onChange={(e) =>
                   handleChange(idx, "input_quantity", e.target.value)
                 }
               />
+
               <label>Output Quantity</label>
               <input
                 type="number"
-                placeholder="Output Quantity"
                 value={step.output_quantity}
+                disabled={orderStatus === "Completed"}
                 onChange={(e) =>
                   handleChange(idx, "output_quantity", e.target.value)
                 }
               />
+
+              <label>Remarks</label>
               <textarea
-                placeholder="Remarks"
                 value={step.remarks}
+                disabled={orderStatus === "Completed"}
                 onChange={(e) => handleChange(idx, "remarks", e.target.value)}
               />
             </div>
           ))}
 
-          {formData.length > 0 && (
+          {orderStatus === "In Progress" && formData.length > 0 && (
             <button type="submit" className={styles.submitBtn}>
               Complete Production
             </button>

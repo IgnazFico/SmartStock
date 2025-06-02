@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import styles from "./styles.module.css"; // import the styles
 
 export default function ProductionTrackingPage() {
   const [orders, setOrders] = useState([]);
@@ -29,34 +30,36 @@ export default function ProductionTrackingPage() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Released Production Orders</h1>
+    <div className={styles.container}>
+      <h1 className={styles.title}>Track Production Orders</h1>
 
       {loading ? (
-        <p>Loading...</p>
+        <p className={styles.message}>Loading...</p>
       ) : orders.length === 0 ? (
-        <p>No released production orders available.</p>
+        <p className={styles.message}>
+          No released production orders available.
+        </p>
       ) : (
-        <table className="w-full border text-sm">
-          <thead className="bg-gray-200">
+        <table className={styles.table}>
+          <thead>
             <tr>
-              <th className="p-2 border">Order ID</th>
-              <th className="p-2 border">Item</th>
-              <th className="p-2 border">Quantity</th>
-              <th className="p-2 border">Due Date</th>
-              <th className="p-2 border">Action</th>
+              <th>Order ID</th>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Due Date</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {orders.map((order) => (
-              <tr key={order.prod_order_ID} className="text-center">
-                <td className="p-2 border">{order.prod_order_ID}</td>
-                <td className="p-2 border">{order.item_id}</td>
-                <td className="p-2 border">{order.quantity}</td>
-                <td className="p-2 border">{order.due_date?.slice(0, 10)}</td>
-                <td className="p-2 border">
+              <tr key={order.prod_order_ID}>
+                <td>{order.prod_order_ID}</td>
+                <td>{order.item_id}</td>
+                <td>{order.quantity}</td>
+                <td>{order.due_date?.slice(0, 10)}</td>
+                <td>
                   <button
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    className={styles.trackButton}
                     onClick={() => handleTrackClick(order.prod_order_ID)}
                   >
                     Track

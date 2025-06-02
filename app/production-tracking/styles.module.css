@@ -1,0 +1,51 @@
+.container {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: #f2f2f2;
+  text-align: center;
+}
+
+.message {
+  font-size: 1rem;
+  color: #666;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.table th,
+.table td {
+  border: 1px solid #ccc;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.table {
+  background-color: #f2f2f2;
+}
+
+.trackButton {
+  background-color: #074d6f;
+  color: white;
+  padding: 0.4rem 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+
+.trackButton:hover {
+  background-color: #00567c;
+}

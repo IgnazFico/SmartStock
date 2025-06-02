@@ -10,12 +10,10 @@ export default async function ProductionOrderDetail({ params }) {
 
   const order = data.find((o) => o.prod_order_ID === prod_order_ID);
 
-  if (!order)
-    return <div className="p-6 text-red-600">Production Order Unavailable</div>;
+  if (!order) return <div>Production Order Unavailable</div>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Production Order Details</h1>
+    <div>
       <ProductionOrderForm order={order} mode="view" />
     </div>
   );

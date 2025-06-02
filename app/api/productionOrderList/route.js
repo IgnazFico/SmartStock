@@ -1,11 +1,12 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import connect from "../../../utils/db";
 
 export async function GET(request) {
   try {
     const db = await connect();
-    const collection = db.collection("production_order");
-    const records = await collection.find({}).toArray();
+    const records = await db.collection("production_order").find({}).toArray();
 
     // Return the records as JSON
     const response = NextResponse.json(records, { status: 200 });

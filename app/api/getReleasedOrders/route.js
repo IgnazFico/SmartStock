@@ -4,14 +4,16 @@ import connect from "../../../utils/db";
 export async function GET() {
   try {
     const db = await connect();
-    const releasedOrders = await db
+
+    // Fetch all orders where status is NOT "Planned"
+    const orders = await db
       .collection("production_order")
-      .find({ status: "Released" })
+      .find({ status: { $ne: "Planned" } })
       .toArray();
 
-    return NextResponse.json({ orders: releasedOrders });
+    return NextResponse.json({ orders });
   } catch (err) {
-    console.error("Failed to fetch released orders:", err);
+    console.error("Failed to fetch production orders:", err);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
