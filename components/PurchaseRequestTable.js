@@ -1,59 +1,67 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styles from "./PurchaseRequestTable.module.css";
-import ApprovalModal from "./ApprovalModal"; 
+import ApprovalModal from "./ApprovalModal";
 
 const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
-  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 10;
+
+  // Local state
+  const [localRecords, setLocalRecords] = useState(records);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [approvalDetail, setApprovalDetail] = useState(null);
-  const recordsPerPage = 10;
-  const [localRecords, setLocalRecords] = useState(records);
 
+  // Sync props records to local state
   useEffect(() => {
     setLocalRecords(records);
   }, [records]);
 
+  // Reset page when search term changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  const filteredRecords = (localRecords ?? []).filter((r) =>
+  // Filter records based on pr_ID or users_ID containing searchTerm
+  const filteredRecords = localRecords.filter((r) =>
     [r?.pr_ID, r?.users_ID].some((field) =>
       String(field || "").toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
+  // Slice records for current page
   const currentRecords = filteredRecords.slice(
     (currentPage - 1) * recordsPerPage,
     currentPage * recordsPerPage
   );
 
-  const fetchPRs = async () => {
+  // Fetch PR data to refresh list
+  const fetchPRs = useCallback(async () => {
     try {
       const res = await fetch("/api/pr");
-      if (!res.ok) throw new Error("Gagal mengambil data PR");
+      if (!res.ok) throw new Error("Failed to fetch Purchase Requests");
       const data = await res.json();
       setLocalRecords(data);
     } catch (error) {
-      console.error("Error fetching PR data:", error);
+      console.error(error);
     }
-  };
+  }, []);
 
+  // When user clicks a row
   const handleRowClick = async (record) => {
     setSelectedRecord(record);
 
     if (record.status === "Approved" || record.status === "Rejected") {
       try {
         const res = await fetch(`/api/approval/detail?pr_ID=${record.pr_ID}`);
-        if (!res.ok) throw new Error("Gagal mengambil detail approval");
+        if (!res.ok) throw new Error("Failed to fetch approval detail");
         const detail = await res.json();
         setApprovalDetail(detail);
-      } catch (err) {
-        console.error("Failed to fetch approval detail", err);
+      } catch (error) {
+        console.error(error);
         setApprovalDetail(null);
       }
     } else {
@@ -67,16 +75,19 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
     }
   };
 
+  // Pagination buttons handler
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div>
       <div className={styles.actions}>
         <input
+          type="text"
           placeholder="Search PR ID or User ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className={styles.searchInput}
+          aria-label="Search Purchase Requests"
         />
         <button className={styles.newPRButton} onClick={onAddNewPR}>
           + New PR
@@ -84,15 +95,11 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
       </div>
 
       {filteredRecords.length === 0 ? (
-        <p>Tidak ada data Purchase Request.</p>
+        <p className={styles.noData}>Tidak ada data Purchase Request.</p>
       ) : (
         <>
           <div className={styles.resultsSummary}>
-            {filteredRecords.length} records | Total Quantity:{" "}
-            {filteredRecords.reduce(
-              (sum, r) => sum + Number(r.quantity || 0),
-              0
-            )}
+            {filteredRecords.length} records{" "}
           </div>
 
           <table className={styles.table}>
@@ -113,15 +120,18 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
                   onClick={() => handleRowClick(r)}
                   className={styles.tableRow}
                   style={{ cursor: "pointer" }}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      handleRowClick(r);
+                    }
+                  }}
+                  aria-label={`Purchase Request ${r.pr_ID}, status: ${r.status}`}
                 >
                   <td>{r.pr_ID}</td>
                   <td>{r.users_ID}</td>
                   <td>{r.department}</td>
-                  <td>
-                    {r.request_date
-                      ? new Date(r.request_date).toISOString().split("T")[0]
-                      : ""}
-                  </td>
+                  <td>{r.request_date ? new Date(r.request_date).toISOString().split("T")[0] : ""}</td>
                   <td>{r.priority}</td>
                   <td>{r.status}</td>
                 </tr>
@@ -130,18 +140,17 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
           </table>
 
           <div className={styles.container}>
-            {Array.from(
-              { length: Math.ceil(filteredRecords.length / recordsPerPage) },
-              (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => paginate(i + 1)}
-                  className={styles.pageButton}
-                >
-                  {i + 1}
-                </button>
-              )
-            )}
+            {Array.from({ length: Math.ceil(filteredRecords.length / recordsPerPage) }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => paginate(i + 1)}
+                className={`${styles.pageButton} ${currentPage === i + 1 ? styles.activePage : ""}`}
+                aria-current={currentPage === i + 1 ? "page" : undefined}
+                aria-label={`Go to page ${i + 1}`}
+              >
+                {i + 1}
+              </button>
+            ))}
           </div>
         </>
       )}

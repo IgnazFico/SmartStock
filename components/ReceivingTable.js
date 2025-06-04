@@ -9,6 +9,7 @@ const ReceivingTable = ({ records = [] }) => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [suppliers, setSuppliers] = useState([]);
   const [materials, setMaterials] = useState([]);
+  const [poItems, setPoItems] = useState([]);
   const recordsPerPage = 10;
 
   // Fetch suppliers and materials once
@@ -19,8 +20,10 @@ const ReceivingTable = ({ records = [] }) => {
           fetch("/api/supplier"),
           fetch("/api/materials"),
         ]);
-        const [supData, matData] = await Promise.all([supRes.json(), matRes.json()]);
-
+        const [supData, matData] = await Promise.all([
+          supRes.json(),
+          matRes.json(),
+        ]);
         setSuppliers(supData);
         setMaterials(matData);
       } catch (error) {
@@ -29,6 +32,23 @@ const ReceivingTable = ({ records = [] }) => {
     }
     fetchSuppliersAndMaterials();
   }, []);
+
+  // Fetch PO items ketika selectedRecord berubah
+  useEffect(() => {
+    async function fetchPOItems() {
+      if (!selectedRecord) return;
+      try {
+        const res = await fetch(`/api/po-items?po_ID=${selectedRecord.po_ID}`);
+        if (!res.ok) throw new Error("Gagal ambil PO items");
+        const data = await res.json();
+        setPoItems(data);
+      } catch (error) {
+        console.error("Gagal fetch PO Items:", error);
+        setPoItems([]);
+      }
+    }
+    fetchPOItems();
+  }, [selectedRecord]);
 
   const filteredRecords = Array.isArray(records)
     ? records.filter((r) =>
@@ -47,7 +67,7 @@ const ReceivingTable = ({ records = [] }) => {
   const handleReceive = async () => {
     if (!selectedRecord) return;
     const updatedData = {
-      po_ID: selectedRecord.po_ID,  // pastikan po_ID dikirim ke API PUT
+      po_ID: selectedRecord.po_ID,
       received_date: new Date().toISOString().split("T")[0],
       status: "Received",
     };
@@ -71,13 +91,11 @@ const ReceivingTable = ({ records = [] }) => {
     }
   };
 
-  // Helper function cari nama supplier berdasarkan ID
   const getSupplierName = (supplier_ID) => {
     const supplier = suppliers.find((s) => s.supplier_ID === supplier_ID);
     return supplier ? supplier.supplier : "-";
   };
 
-  // Helper function cari nama material berdasarkan ID
   const getMaterialName = (material_ID) => {
     const material = materials.find((m) => m.material_ID === material_ID);
     return material ? material.material : "-";
@@ -147,19 +165,26 @@ const ReceivingTable = ({ records = [] }) => {
 
       {selectedRecord && (
         <div className={styles.modalOverlay} onClick={() => setSelectedRecord(null)}>
-          <div
-            className={styles.modalContent}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <h3>Detail PO: {selectedRecord.po_ID}</h3>
             <p>Order Date: {selectedRecord.order_date}</p>
             <p>Supplier ID: {selectedRecord.supplier_ID}</p>
             <p>Supplier: {getSupplierName(selectedRecord.supplier_ID)}</p>
-            <p>Material ID: {selectedRecord.material_ID}</p>
-            <p>Material: {getMaterialName(selectedRecord.material_ID)}</p>
-            <p>Quantity: {selectedRecord.quantity}</p>
             <p>Status: {selectedRecord.status}</p>
             <p>Received Date: {selectedRecord.received_date}</p>
+
+            <h4>Items:</h4>
+            <ul>
+              {poItems.length === 0 ? (
+                <li>Tidak ada item</li>
+              ) : (
+                poItems.map((item, idx) => (
+                  <li key={idx}>
+                    {item.material_ID} - {getMaterialName(item.material_ID)} | Qty: {item.quantity}
+                  </li>
+                ))
+              )}
+            </ul>
 
             {selectedRecord.status !== "Received" && (
               <button onClick={handleReceive} className={styles.receiveButton}>

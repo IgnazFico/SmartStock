@@ -13,7 +13,7 @@ const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
 
   const filteredRecords = Array.isArray(records)
     ? records.filter((r) =>
-        [r.po_ID, r.supplier_ID, r.material_ID].some((field) =>
+        [r.po_ID, r.supplier_ID].some((field) =>
           (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())
         )
       )
@@ -35,7 +35,7 @@ const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
       <div className={styles.actions}>
         <input
           type="text"
-          placeholder="Search PO Number, Supplier, or Material..."
+          placeholder="Search PO Number or Supplier..."
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -53,8 +53,8 @@ const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
       ) : (
         <>
           <div className={styles.resultsSummary}>
-            {filteredRecords.length} records | Total Quantity:{" "}
-            {filteredRecords.reduce((sum, r) => sum + Number(r.quantity), 0)}
+            {filteredRecords.length} records
+            {/* Quantity total tidak ditampilkan karena di koleksi lain */}
           </div>
 
           <table className={styles.table}>
@@ -63,18 +63,15 @@ const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
                 <th>PO ID</th>
                 <th>Order Date</th>
                 <th>Supplier ID</th>
-                <th>Material ID</th>
                 <th>Status</th>
-
               </tr>
             </thead>
             <tbody>
               {currentRecords.map((r, i) => (
-                <tr key={i} onClick={() => handleRowClick(r)}>
+                <tr key={i} onClick={() => handleRowClick(r)} style={{ cursor: 'pointer' }}>
                   <td>{r.po_ID}</td>
                   <td>{r.order_date}</td>
                   <td>{r.supplier_ID}</td>
-                  <td>{r.material_ID}</td>
                   <td>{r.status}</td>
                 </tr>
               ))}
