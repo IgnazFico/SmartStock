@@ -15,7 +15,7 @@ export async function GET(request) {
       { error: "partNumber is required" },
       { status: 400 }
     );
-  } 
+  }
 
   // Perform a case-insensitive search for partNumber
   const results = await itemMasterCollection
