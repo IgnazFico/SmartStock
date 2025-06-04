@@ -13,10 +13,18 @@ export default function PRPage() {
   const handleRecordClick = (record) => {
   };
 
-  const handleNewPRSuccess = (newPR) => {
-    setRecords((prev) => [...prev, newPR]);
-    setShowForm(false);
-  };
+  const handleNewPRSuccess = async () => {
+  setShowForm(false);
+  try {
+    const res = await fetch("/api/pr");
+    const data = await res.json();
+    setRecords(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error("Gagal fetch ulang data PR:", err);
+    setRecords([]);
+  }
+};
+
 
   useEffect(() => {
     const fetchData = async () => {

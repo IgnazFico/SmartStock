@@ -7,23 +7,25 @@ export default function FormPurchaseOrder({ onSubmitSuccess, onClose }) {
   const [formData, setFormData] = useState({
     order_date: "",
     supplier_ID: "",
-    material_ID: "",
-    quantity: "",
     received_date: "",
     status: "order",
   });
+
+  const [orderItems, setOrderItems] = useState([
+    { material_ID: "", quantity: 1 },
+  ]);
+
   const [suppliers, setSuppliers] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Fetch supplier dan material dari API
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
         const [supplierRes, materialRes] = await Promise.all([
           fetch("/api/supplier"),
-          fetch("/api/materials"), 
+          fetch("/api/materials"),
         ]);
         const supplierData = await supplierRes.json();
         const materialData = await materialRes.json();
@@ -37,63 +39,73 @@ export default function FormPurchaseOrder({ onSubmitSuccess, onClose }) {
     fetchDropdownData();
   }, []);
 
-  function handleChange(e) {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  }
+  };
 
-  async function handleSubmit(e) {
+  const handleItemChange = (index, field, value) => {
+    const updatedItems = [...orderItems];
+    updatedItems[index][field] = field === "quantity" ? Number(value) : value;
+    setOrderItems(updatedItems);
+  };
+
+  const addItem = () => {
+    setOrderItems((prev) => [...prev, { material_ID: "", quantity: 1 }]);
+  };
+
+  const removeItem = (index) => {
+    setOrderItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     const payload = {
       ...formData,
-      quantity: Number(formData.quantity),
+      items: orderItems,
     };
 
     try {
-      const res = await fetch("/api/po", {
+      console.log("📦 Payload yang dikirim ke API:", [payload]);
+
+      const res = await fetch("/api/po/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify([payload]), // ✅ kirim sebagai array
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || "Gagal menyimpan data PO");
+        throw new Error(errorData.error || "Gagal menyimpan data PO");
       }
 
       const savedPO = await res.json();
+      alert(savedPO.message);
       onSubmitSuccess?.(savedPO);
     } catch (err) {
+      console.error("❌ Error saat submit PO:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className={styles.formWrapper} style={{ position: "relative" }}>
-      <button
-        onClick={onClose}
-        style={{
-          position: "absolute",
-          top: "8px",
-          right: "8px",
-          background: "transparent",
-          border: "none",
-          fontSize: "24px",
-          cursor: "pointer",
-          lineHeight: 1,
-        }}
-        aria-label="Close form"
-        type="button"
-      >
-        &times;
-      </button>
-
-      <h2 className={styles.title}>Form Purchase Order</h2>
+    <div className={styles.formWrapper}>
+      <div className={styles.formHeader}>
+        <h2 className={styles.title}>Form Purchase Order</h2>
+        <button
+          onClick={onClose}
+          className={styles.closeButton}
+          aria-label="Close form"
+          type="button"
+        >
+          &times;
+        </button>
+      </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <label className={styles.formLabel}>
@@ -126,41 +138,68 @@ export default function FormPurchaseOrder({ onSubmitSuccess, onClose }) {
           </select>
         </label>
 
-        <label className={styles.formLabel}>
-          Material:
-          <select
-            className={styles.formInput}
-            name="material_ID"
-            value={formData.material_ID}
-            onChange={handleChange}
-            required
-          >
-            <option value="">-- Select Material --</option>
-            {materials.map((m) => (
-              <option key={m.material_ID} value={m.material_ID}>
-                {m.material_ID} - {m.material}
-              </option>
-            ))}
-          </select>
-        </label>
+        <hr />
+        <h3>PO Items</h3>
+        {orderItems.map((item, index) => (
+          <div key={index} className={styles.itemRow}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>
+                Material:
+                <select
+                  className={styles.formInput}
+                  value={item.material_ID}
+                  onChange={(e) =>
+                    handleItemChange(index, "material_ID", e.target.value)
+                  }
+                  required
+                >
+                  <option value="">-- Select Material --</option>
+                  {materials.map((m) => (
+                    <option key={m.material_ID} value={m.material_ID}>
+                      {m.material_ID} - {m.material}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
-        <label className={styles.formLabel}>
-          Quantity:
-          <input
-            className={styles.formInput}
-            type="number"
-            name="quantity"
-            value={formData.quantity}
-            onChange={handleChange}
-            required
-            min={1}
-          />
-        </label>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>
+                Quantity:
+                <input
+                  className={styles.formInput}
+                  type="number"
+                  value={item.quantity}
+                  onChange={(e) =>
+                    handleItemChange(index, "quantity", e.target.value)
+                  }
+                  required
+                  min={1}
+                />
+              </label>
+            </div>
+
+            {orderItems.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeItem(index)}
+                className={styles.removeButton}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
+
+        <button type="button" onClick={addItem} className={styles.addButton}>
+          + Add Item
+        </button>
 
         {error && <p className={styles.error}>{error}</p>}
 
+        <hr />
         <button className={styles.formButton} type="submit" disabled={loading}>
-          {loading ? "Menyimpan..." : "Simpan PO"}
+          {loading ? "Menyimpan..." : "Save PO"}
         </button>
       </form>
     </div>
