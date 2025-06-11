@@ -7,12 +7,12 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
   const [remarks, setRemarks] = useState("");
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
-  const [selectedSupplierID, setSelectedSupplierID] = useState("");
-  const [localRecord, setLocalRecord] = useState(record); // local copy of record
+  const [items, setItems] = useState([]); 
+  // items akan di-extend jadi { ...item, selectedSupplierID }
 
   useEffect(() => {
     setRemarks("");
-    setLocalRecord(record); // update local copy if record changes
+    setItems([]);
 
     async function fetchSuppliers() {
       try {
@@ -24,6 +24,28 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
         console.error(err);
       }
     }
+
+    async function fetchItems(pr_ID) {
+      try {
+        const res = await fetch(`/api/pr-items?pr_ID=${pr_ID}`);
+        if (!res.ok) throw new Error("Gagal mengambil data item PR");
+        const data = await res.json();
+
+        // Set default selectedSupplierID kosong untuk setiap item
+        const itemsWithSuppliers = data.map((item) => ({
+          ...item,
+          selectedSupplierID: "",
+        }));
+        setItems(itemsWithSuppliers);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (record?.pr_ID) {
+      fetchItems(record.pr_ID);
+    }
+
     fetchSuppliers();
   }, [record]);
 
@@ -32,8 +54,8 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
     setLoading(true);
 
     const approvalData = {
-      pr_ID: localRecord.pr_ID,
-      users_ID: localRecord.users_ID,
+      pr_ID: record.pr_ID,
+      users_ID: record.users_ID,
       approval_status: status,
       approval_date: new Date().toISOString(),
       remarks,
@@ -63,30 +85,63 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
     }
   };
 
+  const handleSupplierChange = (request_item_ID, supplierID) => {
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        item.request_item_ID === request_item_ID
+          ? { ...item, selectedSupplierID: supplierID }
+          : item
+      )
+    );
+  };
+
   const handleConvertToPO = async () => {
-    if (!selectedSupplierID) {
-      alert("Pilih supplier terlebih dahulu sebelum convert ke PO.");
-      return;
+    // Cek semua item sudah punya supplier dipilih
+    for (const item of items) {
+      if (!item.selectedSupplierID) {
+        alert(
+          `Supplier belum dipilih untuk material ${item.material_ID}. Harap pilih supplier.`
+        );
+        return;
+      }
     }
 
-    const poData = {
-      pr_ID: localRecord.pr_ID,
-      order_date: new Date().toISOString(),
-      supplier_ID: selectedSupplierID,
-      material_ID: localRecord.material_ID,
-      quantity: Number(localRecord.quantity) || 0,
-      status: "order",
-      received_date: "",
-    };
+    if (items.length === 0) {
+      alert("Tidak ada item untuk dibuat PO.");
+      return;
+    }
 
     setLoading(true);
 
     try {
-      // Buat PO
-      const res = await fetch("/api/po", {
+      // Group items berdasarkan selectedSupplierID
+      const groupedBySupplier = items.reduce((acc, item) => {
+        const supID = item.selectedSupplierID;
+        if (!acc[supID]) acc[supID] = [];
+        acc[supID].push(item);
+        return acc;
+      }, {});
+
+      // Bentuk payload array PO: 1 PO per supplier dengan items array
+      const poPayload = Object.entries(groupedBySupplier).map(
+        ([supplier_ID, groupedItems]) => ({
+          pr_ID: record.pr_ID,
+          order_date: new Date().toISOString(),
+          supplier_ID,
+          items: groupedItems.map((i) => ({
+            material_ID: i.material_ID,
+            quantity: Number(i.quantity) || 0,
+          })),
+          status: "order",
+          received_date: "",
+        })
+      );
+
+      // Kirim bulk PO ke endpoint
+      const res = await fetch("/api/po/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(poData),
+        body: JSON.stringify(poPayload),
       });
 
       if (!res.ok) {
@@ -96,14 +151,9 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
         return;
       }
 
-      alert("PO berhasil dibuat!");
-
-      // Update status PR lokal agar UI langsung update tanpa tutup modal
-      setLocalRecord((prev) => ({ ...prev, status: "converted" }));
-
-      // Refresh data di list utama
+      alert("PO berhasil dibuat untuk semua supplier!");
       await refreshData();
-
+      onClose();
     } catch (error) {
       console.error(error);
       alert("Terjadi kesalahan saat membuat PO.");
@@ -112,25 +162,73 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
     }
   };
 
-  if (!localRecord) return null;
+  if (!record) return null;
 
-  const isReadOnly = localRecord.status.toLowerCase() !== "pending";
+  const isReadOnly = record.status.toLowerCase() !== "pending";
 
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
         <h2>Approval Form</h2>
-        <p><strong>PR ID:</strong> {localRecord.pr_ID}</p>
-        <p><strong>User ID:</strong> {localRecord.users_ID}</p>
-        <p><strong>Department:</strong> {localRecord.department}</p>
-        <p><strong>Request Date:</strong> {localRecord.request_date ? new Date(localRecord.request_date).toISOString().split("T")[0] : ""}</p>
-        <p><strong>Priority:</strong> {localRecord.priority}</p>
-        <p><strong>Material ID:</strong> {localRecord.material_ID}</p>
-        <p><strong>Quantity:</strong> {localRecord.quantity}</p>
-        <p><strong>Status:</strong> {localRecord.status}</p>
+        <p>
+          <strong>PR ID:</strong> {record.pr_ID}
+        </p>
+        <p>
+          <strong>User ID:</strong> {record.users_ID}
+        </p>
+        <p>
+          <strong>Department:</strong> {record.department}
+        </p>
+        <p>
+          <strong>Request Date:</strong>{" "}
+          {record.request_date
+            ? new Date(record.request_date).toISOString().split("T")[0]
+            : ""}
+        </p>
+        <p>
+          <strong>Priority:</strong> {record.priority}
+        </p>
+        <p>
+          <strong>Status:</strong> {record.status}
+        </p>
 
-        {isReadOnly && localRecord.status === "rejected" && (
-          <p><strong>Remarks:</strong> {localRecord.remarks}</p>
+        <h3>Items:</h3>
+        {items.length === 0 && <p>Tidak ada item.</p>}
+        <ul>
+          {items.map((item) => (
+            <li key={item.request_item_ID} style={{ marginBottom: "12px" }}>
+              <div>
+                Material ID: {item.material_ID} | Quantity: {item.quantity}
+              </div>
+              {record.status.toLowerCase() === "approved" && (
+                <div>
+                  <label>
+                    <select
+                      value={item.selectedSupplierID}
+                      onChange={(e) =>
+                        handleSupplierChange(item.request_item_ID, e.target.value)
+                      }
+                      disabled={loading}
+                      className={styles.supplierDropdown}
+                    >
+                      <option value="">-- Select Supplier --</option>
+                      {suppliers.map((s) => (
+                        <option key={s.supplier_ID} value={s.supplier_ID}>
+                          {s.supplier} ({s.supplier_ID})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        {isReadOnly && record.status === "rejected" && (
+          <p>
+            <strong>Remarks:</strong> {record.remarks}
+          </p>
         )}
 
         {!isReadOnly && (
@@ -161,41 +259,19 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
           </>
         )}
 
-        {localRecord.status.toLowerCase() === "approved" && (
-          <>
-            <div>
-              <label htmlFor="supplierSelect">
-                <strong>Select Supplier for Convert to PO:</strong>
-              </label>
-              <select
-                id="supplierSelect"
-                value={selectedSupplierID}
-                onChange={(e) => setSelectedSupplierID(e.target.value)}
-                className={styles.supplierDropdown}
-              >
-                <option value="">-- Pilih Supplier --</option>
-                {suppliers.map((s) => (
-                  <option key={s.supplier_ID} value={s.supplier_ID}>
-                    {s.supplier} ({s.supplier_ID})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              className={styles.convertButton}
-              onClick={handleConvertToPO}
-              disabled={loading || !selectedSupplierID}
-            >
-              {loading ? "Processing..." : "Convert to PO"}
-            </button>
-          </>
+        {record.status.toLowerCase() === "approved" && (
+          <button
+            className={styles.convertButton}
+            onClick={handleConvertToPO}
+            disabled={
+              loading || items.some((item) => !item.selectedSupplierID)
+            }
+          >
+            {loading ? "Processing..." : "Convert to PO"}
+          </button>
         )}
 
-        <button
-          className={styles.closeButton}
-          onClick={onClose}
-          disabled={loading}
-        >
+        <button className={styles.closeButton} onClick={onClose} disabled={loading}>
           Close
         </button>
       </div>

@@ -5,85 +5,102 @@ import styles from "./style.module.css";
 
 export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
   const [formData, setFormData] = useState({
-    pr_ID: "",
-    users_ID: "USR001",
+    users_ID: "",
     department: "",
     request_date: "",
-    material_ID: "",
-    quantity: "",
     priority: "medium",
-    status: "",
   });
 
+  const [items, setItems] = useState([{ material_ID: "", quantity: "" }]);
   const [departments, setDepartments] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-  fetch("/api/users/departments")
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Departments:", data);
-      setDepartments(data);
-    })
-    .catch(() => setDepartments([]));
-}, []);
+    const fetchDepartments = async () => {
+      try {
+        const res = await fetch("/api/users/departments");
+        const data = await res.json();
+        setDepartments(data || []);
+      } catch {
+        setDepartments([]);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
-useEffect(() => {
-  fetch("/api/materials")
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Materials:", data);
-      setMaterials(data);
-    })
-    .catch(() => setMaterials([]));
-}, []);
-
-
-  // Auto fill user ID based on department
   useEffect(() => {
-  if (formData.department) {
-    fetch(`/api/users/by-department?department=${formData.department}`)
-      .then((res) => res.json())
-      .then((users) => {
-        console.log("Users dari API:", users);
-        if (Array.isArray(users) && users.length > 0) {
-          console.log("Set users_id ke:", users[0].users_ID);
-          setFormData((prev) => ({ ...prev, users_ID: users[0].users_ID }));
-        } else {
-          setFormData((prev) => ({ ...prev, users_ID: "" }));
-        }
-      })
-      .catch(() => setFormData((prev) => ({ ...prev, users_ID: "" })));
-  } else {
-    setFormData((prev) => ({ ...prev, users_ID: "" }));
-  }
-}, [formData.department]);
+    const fetchMaterials = async () => {
+      try {
+        const res = await fetch("/api/materials");
+        const data = await res.json();
+        setMaterials(data || []);
+      } catch {
+        setMaterials([]);
+      }
+    };
+    fetchMaterials();
+  }, []);
 
+  useEffect(() => {
+    if (!formData.department) return;
+    const fetchUserByDepartment = async () => {
+      try {
+        const res = await fetch(`/api/users/by-department?department=${formData.department}`);
+        const users = await res.json();
+        const userID = Array.isArray(users) && users.length > 0 ? users[0].users_ID : "";
+        setFormData((prev) => ({ ...prev, users_ID: userID }));
+      } catch {
+        setFormData((prev) => ({ ...prev, users_ID: "" }));
+      }
+    };
+    fetchUserByDepartment();
+  }, [formData.department]);
 
-useEffect(() => {
-  console.log("formData berubah:", formData);
-}, [formData]);
-
-
-
-  function handleChange(e) {
+  const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  }
+  };
 
-  async function handleSubmit(e) {
+  const handleItemChange = (index, e) => {
+    const { name, value } = e.target;
+    const updatedItems = [...items];
+    updatedItems[index][name] = value;
+    setItems(updatedItems);
+  };
+
+  const addItem = () => {
+    setItems([...items, { material_ID: "", quantity: "" }]);
+  };
+
+  const removeItem = (index) => {
+    const updatedItems = [...items];
+    updatedItems.splice(index, 1);
+    setItems(updatedItems);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { pr_ID, ...payload } = formData;
-    payload.quantity = Number(payload.quantity);
-    console.log("Payload yang dikirim ke API:", payload); 
-
+    const isValid = items.every((item) => item.material_ID && item.quantity > 0);
+    if (!isValid) {
+      setError("Harap isi material dan quantity yang valid untuk semua item.");
+      setLoading(false);
+      return;
+    }
 
     try {
+      const payload = {
+        ...formData,
+        items: items.map((item) => ({
+          material_ID: item.material_ID,
+          quantity: Number(item.quantity),
+        })),
+      };
+
       const res = await fetch("/api/pr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,82 +108,65 @@ useEffect(() => {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Gagal menyimpan data PR");
+        const err = await res.json();
+        throw new Error(err.message || "Gagal menyimpan data PR.");
       }
 
-      const savedPR = await res.json();
-      onSubmitSuccess?.(savedPR);
+      const saved = await res.json();
+      onSubmitSuccess?.(saved);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className={styles.formWrapper} style={{ position: "relative" }}>
-      <button
-        onClick={onClose}
-        style={{
-          position: "absolute",
-          top: "8px",
-          right: "8px",
-          background: "transparent",
-          border: "none",
-          fontSize: "24px",
-          cursor: "pointer",
-          lineHeight: 1,
-        }}
-        aria-label="Close form"
-        type="button"
-      >
-        &times;
-      </button>
-
-      <h2 className={styles.title}>Form Purchase Request</h2>
+    <div className={styles.formWrapper}>
+  <div className={styles.formHeader}>
+    <h2 className={styles.title}>Form Purchase Request</h2>
+    <button onClick={onClose} className={styles.closeButton} type="button">
+      &times;
+    </button>
+  </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        {/* User ID readonly */}
         <label className={styles.formLabel}>
           User ID:
           <input
-            className={styles.formInput}
             name="users_ID"
+            className={styles.formInput}
             value={formData.users_ID}
             disabled
-            placeholder="Automatic User ID by Department"
-            required
+            placeholder="Auto from department"
           />
         </label>
 
-        {/* Department dropdown */}
         <label className={styles.formLabel}>
           Department:
           <select
-            className={styles.formInput}
             name="department"
+            className={styles.formInput}
             value={formData.department}
-            onChange={handleChange}
+            onChange={handleFormChange}
             required
           >
             <option value="">-- Select Department --</option>
             {departments.map((dept) => (
-            <option key={dept} value={dept}>
-             {dept}
-            </option>
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
             ))}
           </select>
         </label>
 
-        {/* Priority */}
         <label className={styles.formLabel}>
           Priority:
           <select
-            className={styles.formInput}
             name="priority"
+            className={styles.formInput}
             value={formData.priority}
-            onChange={handleChange}
+            onChange={handleFormChange}
             required
           >
             <option value="high">High</option>
@@ -175,55 +175,73 @@ useEffect(() => {
           </select>
         </label>
 
-        {/* Request Date */}
         <label className={styles.formLabel}>
           Request Date:
           <input
-            className={styles.formInput}
             type="date"
             name="request_date"
+            className={styles.formInput}
             value={formData.request_date}
-            onChange={handleChange}
+            onChange={handleFormChange}
             required
           />
         </label>
 
-        {/* Material dropdown */}
-        <label className={styles.formLabel}>
-          Material:
-          <select
-            className={styles.formInput}
-            name="material_ID"
-            value={formData.material_ID}
-            onChange={handleChange}
-            required
-          >
-            <option value="">-- Select Material --</option>
-            {materials.map((mat) => (
-            <option key={mat.material_ID} value={mat.material_ID}>
-             {mat.material_ID} - {mat.material}
-            </option>
-            ))}
-          </select>
-        </label>
+        <hr />
 
-        {/* Quantity */}
-        <label className={styles.formLabel}>
-          Quantity:
-          <input
-            className={styles.formInput}
-            type="number"
-            name="quantity"
-            value={formData.quantity}
-            onChange={handleChange}
-            required
-            min={1}
-          />
-        </label>
+        <h4>Items</h4>
+        {items.map((item, index) => (
+          <div key={index} className={styles.itemRow}>
+            <label>
+              Material:
+              <select
+                name="material_ID"
+                value={item.material_ID}
+                onChange={(e) => handleItemChange(index, e)}
+                className={styles.formInput}
+                required
+              >
+                <option value="">-- Select Material --</option>
+                {materials.map((mat) => (
+                  <option key={mat.material_ID} value={mat.material_ID}>
+                    {mat.material_ID} - {mat.material}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Quantity:
+              <input
+                type="number"
+                name="quantity"
+                min="1"
+                value={item.quantity}
+                onChange={(e) => handleItemChange(index, e)}
+                className={styles.formInput}
+                required
+              />
+            </label>
+
+            {items.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeItem(index)}
+                className={styles.removeButton}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
+
+        <button type="button" onClick={addItem} className={styles.addButton}>
+          + Add Item
+        </button>
 
         {error && <p className={styles.error}>{error}</p>}
 
-        <button className={styles.formButton} type="submit" disabled={loading}>
+        <button type="submit" className={styles.formButton} disabled={loading}>
           {loading ? "Menyimpan..." : "Simpan PR"}
         </button>
       </form>

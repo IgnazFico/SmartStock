@@ -14,11 +14,8 @@ export async function GET() {
         ? new Date(item.order_date).toISOString().split("T")[0]
         : "",
       supplier_ID: item.supplier_ID || "",
-      material: item.material,
-      supplier: item.supplier,
-      material_ID: item.material_ID || "",
-      quantity: Number(item.quantity) || 0,
-      status: item.status,
+      status: item.status || "",
+      received_date: item.received_date || null,
     }));
 
     return NextResponse.json(formatted);
@@ -34,68 +31,68 @@ export async function GET() {
 export async function POST(req) {
   try {
     const db = await connect();
-    const collection = db.collection("purchase_orders");
+    const poCollection = db.collection("purchase_orders");
+    const poItemsCollection = db.collection("purchase_orders_items");
     const prCollection = db.collection("purchase_requests");
 
     const newPO = await req.json();
 
-    // Validasi wajib termasuk pr_ID
+    // Validasi wajib
     if (
       !newPO.order_date ||
       !newPO.supplier_ID ||
-      !newPO.material_ID ||
-      !newPO.quantity ||
-      !newPO.pr_ID
+      !newPO.pr_ID ||
+      !Array.isArray(newPO.items) ||
+      newPO.items.length === 0
     ) {
       return NextResponse.json(
-        { message: "Semua field wajib diisi termasuk pr_ID" },
+        { message: "order_date, supplier_ID, pr_ID, dan items wajib diisi" },
         { status: 400 }
       );
     }
 
-    // Buat PO ID otomatis
-    const lastPO = await collection.find().sort({ po_ID: -1 }).limit(1).toArray();
+    // Generate PO ID otomatis
+    const lastPO = await poCollection.find().sort({ po_ID: -1 }).limit(1).toArray();
     const newNumber = lastPO.length > 0 ? parseInt(lastPO[0].po_ID.slice(2)) + 1 : 1;
     const newPO_ID = `PO${newNumber.toString().padStart(4, "0")}`;
 
-    // Buat data PO yang akan disimpan tanpa pr_ID
+    // Simpan header PO
     const poToInsert = {
       po_ID: newPO_ID,
       order_date: new Date(newPO.order_date),
       supplier_ID: newPO.supplier_ID,
-      material_ID: newPO.material_ID,
-      quantity: Number(newPO.quantity),
       status: newPO.status || "pending",
-      received_date: newPO.received_date,
+      received_date: newPO.received_date || null,
     };
 
-    const result = await collection.insertOne(poToInsert);
-
-    if (!result.acknowledged) {
+    const poResult = await poCollection.insertOne(poToInsert);
+    if (!poResult.acknowledged) {
       throw new Error("Gagal menyimpan data PO ke database.");
     }
 
-    // Update status PR jadi converted
-    try {
-      const updateResult = await prCollection.updateOne(
-        { pr_ID: newPO.pr_ID },
-        { $set: { status: "converted" } }
-      );
+    // Simpan detail items ke po_items dengan referensi po_ID
+    const itemsToInsert = newPO.items.map((item) => ({
+      po_ID: newPO_ID,
+      material_ID: item.material_ID,
+      quantity: Number(item.quantity),
+      request_item_ID: item.request_item_ID || null, // optional
+    }));
 
-      if (updateResult.modifiedCount === 0) {
-        console.warn(`PR dengan pr_ID=${newPO.pr_ID} tidak ditemukan atau status tidak diperbarui.`);
-      }
-    } catch (errUpdate) {
-      console.error("🔥 Error update status PR:", errUpdate);
+    const itemsResult = await poItemsCollection.insertMany(itemsToInsert);
+    if (itemsResult.insertedCount !== itemsToInsert.length) {
+      console.warn("Tidak semua item PO berhasil disimpan.");
     }
 
-    // Response PO baru
-    const responseData = {
-      ...poToInsert,
-      _id: result.insertedId,
-    };
+    // Update status PR jadi converted
+    await prCollection.updateOne(
+      { pr_ID: newPO.pr_ID },
+      { $set: { status: "converted" } }
+    );
 
-    return NextResponse.json(responseData, { status: 201 });
+    return NextResponse.json(
+      { message: "PO dan items berhasil disimpan", po_ID: newPO_ID },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("🔥 API Error POST /api/po:", err);
     return NextResponse.json(
@@ -104,4 +101,3 @@ export async function POST(req) {
     );
   }
 }
-

@@ -10,7 +10,6 @@ import { format, endOfDay } from "date-fns";
 import debounce from "lodash/debounce";
 import styles from "./styles.module.css";
 
-
 const Table = React.lazy(() => import("../../components/Table"));
 
 // Columns configuration for react-table including PO Number column
@@ -47,12 +46,19 @@ const columns = [
     Header: "QTY",
     accessor: "qty_updated",
   },
-  {
-    Header: "ID",
-    accessor: "record_id",
-  },
 ];
 
+// Default values for empty columns
+const DEFAULTS = {
+  "PO NUMBER": "Default FG",
+};
+
+function fillDefaults(row) {
+  return {
+    ...row,
+    po_no: row.po_no && row.po_no.trim() !== "" ? row.po_no : DEFAULTS["PO NUMBER"],
+  };
+}
 
 const LogMenu = () => {
   const [dateRange, setDateRange] = useState([null, null]); // State to manage date range
@@ -64,7 +70,10 @@ const LogMenu = () => {
   const fetchData = useCallback(async () => {
     try {
       const response = await fetch("/api/getLogRecords"); // Adjust the endpoint as needed
-      const result = await response.json();
+      let result = await response.json();
+
+      // Proses data agar kolom kosong diisi default
+      result = result.map(fillDefaults);
 
       setData(result);
       setFilteredData(result);

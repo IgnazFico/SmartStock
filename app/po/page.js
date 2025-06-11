@@ -14,10 +14,17 @@ export default function POPage() {
     alert(`PO dipilih: ${record.po_ID}`);
   };
 
-  const handleNewPOSuccess = (newPO) => {
-    setRecords((prev) => [...prev, newPO]);
-    setShowForm(false);
-  };
+  const handleNewPOSuccess = async () => {
+  setShowForm(false);
+  try {
+    const res = await fetch("/api/po");
+    const data = await res.json();
+    setRecords(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error("Gagal fetch ulang data PO:", err);
+    setRecords([]);
+  }
+};
 
   useEffect(() => {
     const fetchData = async () => {

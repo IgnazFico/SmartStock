@@ -4,40 +4,31 @@ import connect from "../../../utils/db";
 export async function GET() {
   try {
     const db = await connect();
-    const collection = db.collection("purchase_requests");
-    const records = await collection.find({}).toArray();
+    const prCollection = db.collection("purchase_requests");
+    const prs = await prCollection.find({}).toArray();
 
-    const formatted = records.map((item) => ({
-      pr_ID: item.pr_ID,
-      users_ID: item.users_ID,
-      department: item.department,
-      request_date: item.request_date ? new Date(item.request_date).toISOString().split("T")[0] : "",
-      priority: item.priority,
-      material_ID: item.material_ID,
-      quantity: Number(item.quantity),
-      status: item.status,
-      remarks: item.remarks ||"",
-    }));
-
-    return NextResponse.json(formatted);
-  } catch (err) {
-    console.error("🔥 API Error GET /api/pr:", err);
-    return NextResponse.json({ message: "Gagal mengambil data purchase request" }, { status: 500 });
+    return NextResponse.json(prs, { status: 200 });
+  } catch (error) {
+    console.error("🔥 Gagal ambil data PR:", error);
+    return NextResponse.json({ message: "Gagal ambil data purchase requests" }, { status: 500 });
   }
 }
 
 export async function POST(req) {
   try {
     const db = await connect();
-    const collection = db.collection("purchase_requests");
+    const prCollection = db.collection("purchase_requests");
+    const itemCollection = db.collection("purchase_requests_items");
     const approvalCollection = db.collection("approval");
+
     const newPR = await req.json();
 
-    if (!newPR.request_date || !newPR.department) {
-      return NextResponse.json({ message: "Request date dan department wajib diisi" }, { status: 400 });
+    if (!newPR.request_date || !newPR.department || !Array.isArray(newPR.items) || newPR.items.length === 0) {
+      return NextResponse.json({ message: "Data tidak lengkap (request_date, department, atau items kosong)" }, { status: 400 });
     }
 
-    const allPRs = await collection.find({}).toArray();
+    // Generate PR ID
+    const allPRs = await prCollection.find({}).toArray();
     const lastNumber = allPRs
       .map((doc) => parseInt(doc.pr_ID?.slice(2) || "0"))
       .filter((num) => !isNaN(num))
@@ -45,25 +36,34 @@ export async function POST(req) {
 
     const nextPRNumber = lastNumber + 1;
     const pr_ID = `PR${String(nextPRNumber).padStart(5, "0")}`;
+    const now = Date.now();
 
-    const user = await db.collection("users").findOne({ department: newPR.department });
-
-    const recordToInsert = {
+    // Simpan ke purchase_requests
+    const prRecord = {
       pr_ID,
       users_ID: newPR.users_ID || "",
       department: newPR.department,
-      request_date: new Date(newPR.request_date),
-      material_ID: newPR.material_ID,
-      quantity: Number(newPR.quantity),
+      request_date: new Date(newPR.request_date).toISOString(),
       priority: newPR.priority || "medium",
       status: "pending",
     };
 
-    const result = await collection.insertOne(recordToInsert);
-    if (!result.acknowledged) throw new Error("Gagal menyimpan data PR");
+    const prResult = await prCollection.insertOne(prRecord);
+    if (!prResult.acknowledged) throw new Error("Gagal menyimpan data utama");
 
+    // Simpan item ke purchase_request_items
+    const itemDocs = newPR.items.map((item, idx) => ({
+      request_item_ID: `PRI-${now}-${idx}`,
+      pr_ID,
+      material_ID: item.material_ID,
+      quantity: Number(item.quantity),
+    }));
+
+    await itemCollection.insertMany(itemDocs);
+
+    // Simpan approval
     const approvalRecord = {
-      approval_ID: `APR-${Date.now()}`,
+      approval_ID: `APR-${now}`,
       pr_ID,
       users_ID: newPR.users_ID || "",
       approval_status: "Pending",
@@ -73,9 +73,9 @@ export async function POST(req) {
 
     await approvalCollection.insertOne(approvalRecord);
 
-    return NextResponse.json({ ...recordToInsert, _id: result.insertedId }, { status: 201 });
+    return NextResponse.json({ pr_ID, itemCount: itemDocs.length }, { status: 201 });
   } catch (err) {
-    console.error("🔥 API Error POST /api/pr:", err);
+    console.error("🔥 Error saving PR:", err);
     return NextResponse.json({ message: "Gagal menyimpan data purchase request" }, { status: 500 });
   }
 }
