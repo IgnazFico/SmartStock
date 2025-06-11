@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import connect from "../../../../utils/db";
 
 export async function GET(req, { params }) {
-  const { prod_order_ID } = params;
+  const { prod_order_id } = params;
 
-  if (!prod_order_ID) {
+  if (!prod_order_id) {
     return NextResponse.json(
       { message: "Missing production order ID" },
       { status: 400 }
@@ -16,7 +16,7 @@ export async function GET(req, { params }) {
 
     const order = await db
       .collection("production_order")
-      .findOne({ prod_order_ID: prod_order_ID });
+      .findOne({ prod_order_id: prod_order_id });
 
     if (!order) {
       return NextResponse.json(

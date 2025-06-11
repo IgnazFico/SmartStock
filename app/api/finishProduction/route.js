@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import connect from "../../../utils/db";
 
 export async function POST(req) {
-  const { prod_order_ID } = await req.json();
+  const { prod_order_id } = await req.json();
 
-  if (!prod_order_ID) {
+  if (!prod_order_id) {
     return NextResponse.json({ message: "Missing order ID" }, { status: 400 });
   }
 
@@ -12,7 +12,7 @@ export async function POST(req) {
     const db = await connect();
     await db
       .collection("production_order")
-      .updateOne({ prod_order_ID }, { $set: { status: "Completed" } });
+      .updateOne({ prod_order_id }, { $set: { status: "Completed" } });
 
     return NextResponse.json({ message: "Production started" });
   } catch (err) {

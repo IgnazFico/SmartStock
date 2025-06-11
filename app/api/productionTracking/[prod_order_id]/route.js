@@ -9,7 +9,7 @@ export async function GET(req, { params }) {
 
     const tracking = await db
       .collection("production_tracking")
-      .findOne({ prod_order_ID });
+      .findOne({ prod_order_id });
 
     return NextResponse.json(tracking);
   } catch (err) {

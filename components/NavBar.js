@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import styles from "./NavBar.module.css";
 import { signOut } from "next-auth/react";
@@ -15,6 +16,8 @@ export default function NavBar() {
   const [isPrintOpen, setPrintOpen] = useState(false);
   const [isPurchaseOpen, setPurchaseOpen] = useState(false);
 
+  const router = useRouter();
+
   function handleLogOut() {
     signOut();
   }
@@ -22,7 +25,7 @@ export default function NavBar() {
   return (
     <div className={styles.container}>
       <nav className={styles.verticalNav}>
-        <div className={styles.company}>
+        <div className={styles.company} onClick={() => router.push("/")}>
           <img className={styles.logo} alt="Printec" src="/favicon.ico" />
           <h3>Printec</h3>
         </div>
@@ -138,7 +141,7 @@ export default function NavBar() {
             <li>
               <a href="/auth/register">
                 <img src="/add-user-svgrepo-com.svg" alt="Register" />
-                Daftar
+                Register
               </a>
             </li>
           )}
@@ -146,14 +149,14 @@ export default function NavBar() {
             <li>
               <a href="/master_data">
                 <img src="/master-data.png" alt="Master Data" />
-                Data Utama
+                Master Data
               </a>
             </li>
           )}
           <li>
             <a onClick={handleLogOut} href="/auth">
               <img src="/login-svgrepo-com.svg" alt="Logout Icon" />
-              Keluar
+              Logout
             </a>
           </li>
         </ul>

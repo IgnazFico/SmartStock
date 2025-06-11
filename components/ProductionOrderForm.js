@@ -16,11 +16,11 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
   };
 
   const [formData, setFormData] = useState({
-    prod_order_ID: order.prod_order_ID || "",
+    prod_order_id: order.prod_order_id || "",
     item_id: order.item_id || "",
     description: order.description || "",
     quantity: order.quantity || 0,
-    routing: order.routing || "",
+    routing: order.process_id || "",
     order_date: formatDateTimeLocal(order.order_date) || "",
     due_date: formatDateTimeLocal(order.due_date) || "",
     status: order.status || "",
@@ -36,7 +36,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
         .then((data) =>
           setFormData((prev) => ({
             ...prev,
-            prod_order_ID: data.prod_order_ID,
+            prod_order_id: data.prod_order_id,
           }))
         );
     }
@@ -53,7 +53,6 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
         setFormData((prev) => ({
           ...prev,
           description: data.description || "",
-          routing: data.process_id || "",
         }));
       } catch (err) {
         console.error("Failed to load item details:", err);
@@ -85,7 +84,13 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
           `/api/materialEstimate?item_id=${formData.item_id}`
         );
         const data = await res.json();
-        setMaterials(data);
+        setMaterials(
+          data.map((mat) => ({
+            ...mat,
+            base_required_qty: mat.required_qty, // quantity from BOM (for base batch)
+            calculated_qty: 0,
+          }))
+        );
       } catch (err) {
         console.error("Failed to load material estimates:", err);
       }
@@ -94,13 +99,27 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
     fetchMaterials();
   }, [formData.item_id]);
 
+  useEffect(() => {
+    if (materials.length === 0 || !formData.quantity || materials.length === 0)
+      return;
+
+    const baseOutput = 1000; // Adjust this to match your BOM base (e.g., 100)
+
+    const updated = materials.map((mat) => ({
+      ...mat,
+      calculated_qty: (mat.base_required_qty / baseOutput) * formData.quantity,
+    }));
+
+    setMaterials(updated);
+  }, [formData?.quantity, materials]);
+
   const handleSubmit = async () => {
     let finalData = { ...formData };
 
-    if (!formData.prod_order_ID) {
+    if (!formData.prod_order_id) {
       const res = await fetch("/api/getNextProductionOrderID");
       const data = await res.json();
-      finalData.prod_order_ID = data.prod_order_ID;
+      finalData.prod_order_id = data.prod_order_id;
     }
 
     const payload = {
@@ -124,7 +143,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
     const res = await fetch("/api/releaseProductionOrder", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prod_order_ID: finalData.prod_order_ID }),
+      body: JSON.stringify({ prod_order_id: finalData.prod_order_id }),
     });
 
     const data = await res.json();
@@ -140,7 +159,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
         <div className={styles.formColumn}>
           <div className={styles.formGroup}>
             <label>Production Order</label>
-            <input type="text" value={formData.prod_order_ID} readOnly />
+            <input type="text" value={formData.prod_order_id} readOnly />
           </div>
           <div className={styles.formGroup}>
             <label>Item</label>
@@ -289,7 +308,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
               <tr key={idx}>
                 <td>{mat.material_id}</td>
                 <td>{mat.description}</td>
-                <td>{mat.required_qty}</td>
+                <td>{Math.ceil(mat.calculated_qty)}</td>
                 <td>{mat.unit}</td>
                 <td>{mat.available_qty}</td>
               </tr>

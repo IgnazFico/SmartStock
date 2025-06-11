@@ -21,38 +21,83 @@ export default function ProductionTrackingForm({ prodOrderId }) {
         setItemId(order.item_id);
         setOrderStatus(order.status || "Released");
 
+        // Fetch process steps
         const stepRes = await fetch(`/api/process?item_id=${order.item_id}`);
         const steps = await stepRes.json();
         setProcessSteps(steps);
 
-        if (order.status === "In Progress" || order.status === "Completed") {
+        // Fetch process → material mapping
+        const matRes = await fetch(
+          `/api/processMaterials?item_id=${order.item_id}`
+        );
+        const processMaterials = await matRes.json(); // Should return: { [process_ID]: [{ material_id, default_quantity }] }
+
+        if (order.status === "In Progress") {
           const trackingRes = await fetch(
             `/api/productionTracking/${prodOrderId}`
           );
           const trackingData = await trackingRes.json();
 
-          // Set status from tracking
           setOrderStatus(trackingData.status || order.status);
 
-          // Populate formData as a single-element array
+          // For now: assume single-tracking mode (if multiple needed, use array map)
           setFormData([
             {
               process_id: trackingData.process_id,
-              input_quantity: trackingData.input_quantity,
               output_quantity: trackingData.output_quantity,
               status: trackingData.status,
               remarks: trackingData.remarks,
+              materials: processMaterials[trackingData.process_id] || [],
             },
           ]);
-        } else {
-          // Otherwise, initialize fresh
+        } else if (order.status === "Completed") {
+          const trackingRes = await fetch(
+            `/api/productionTracking/${prodOrderId}`
+          );
+          const trackingData = await trackingRes.json();
+
+          // Fetch actual used materials from production_material_tracking
+          const matTrackingRes = await fetch(
+            `/api/productionMaterialsUsed?prod_order_id=${prodOrderId}`
+          );
+          const usedMaterials = await matTrackingRes.json(); // Should return array of material entries
+
+          setOrderStatus(trackingData.status || order.status);
+
+          const processGroupedMaterials = {};
+          usedMaterials.forEach((mat) => {
+            if (!processGroupedMaterials[mat.process_id]) {
+              processGroupedMaterials[mat.process_id] = [];
+            }
+            processGroupedMaterials[mat.process_id].push({
+              material_id: mat.material_id,
+              quantity: mat.quantity,
+            });
+          });
+
+          // Fill formData with fetched quantities
           setFormData(
             steps.map((step) => ({
               process_id: step.process_ID,
-              input_quantity: 0,
+              output_quantity: trackingData.output_quantity, // Optional: adjust if tracking multiple
+              status: trackingData.status,
+              remarks: trackingData.remarks,
+              materials: processGroupedMaterials[step.process_ID] || [],
+            }))
+          );
+        } else {
+          // Initialize fresh formData with materials
+          setFormData(
+            steps.map((step) => ({
+              process_id: step.process_ID,
               output_quantity: 0,
               status: "Planned",
               remarks: "",
+              materials:
+                processMaterials[step.process_ID]?.map((mat) => ({
+                  material_id: mat.material_id,
+                  quantity: 0,
+                })) || [],
             }))
           );
         }
@@ -77,7 +122,7 @@ export default function ProductionTrackingForm({ prodOrderId }) {
       const res = await fetch("/api/startProduction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prod_order_ID: prodOrderId }),
+        body: JSON.stringify({ prod_order_id: prodOrderId }),
       });
 
       const data = await res.json();
@@ -143,40 +188,55 @@ export default function ProductionTrackingForm({ prodOrderId }) {
             </p>
           )}
 
-          {formData.map((step, idx) => (
-            <div className={styles.card} key={idx}>
-              <h4>
-                Process: {processSteps[idx]?.process_name || "Unnamed Step"}
-              </h4>
+          {formData.map((step, idx) => {
+            const stepInfo = processSteps.find(
+              (p) => p.process_ID === step.process_id
+            );
+            return (
+              <div className={styles.card} key={idx}>
+                <h4>
+                  Process:{" "}
+                  {stepInfo?.process_name || `Process ${step.process_id}`}
+                </h4>
 
-              <label>Input Quantity</label>
-              <input
-                type="number"
-                value={step.input_quantity}
-                disabled={orderStatus === "Completed"}
-                onChange={(e) =>
-                  handleChange(idx, "input_quantity", e.target.value)
-                }
-              />
+                {step.materials?.map((mat, midx) => (
+                  <div key={midx}>
+                    <label>Material {mat.material_id} Used</label>
+                    <input
+                      type="number"
+                      value={mat.quantity}
+                      readOnly={orderStatus === "Completed"}
+                      onChange={(e) => {
+                        if (orderStatus !== "Completed") {
+                          const updated = [...formData];
+                          updated[idx].materials[midx].quantity =
+                            e.target.value;
+                          setFormData(updated);
+                        }
+                      }}
+                    />
+                  </div>
+                ))}
 
-              <label>Output Quantity</label>
-              <input
-                type="number"
-                value={step.output_quantity}
-                disabled={orderStatus === "Completed"}
-                onChange={(e) =>
-                  handleChange(idx, "output_quantity", e.target.value)
-                }
-              />
+                <label>Output Quantity</label>
+                <input
+                  type="number"
+                  value={step.output_quantity}
+                  disabled={orderStatus === "Completed"}
+                  onChange={(e) =>
+                    handleChange(idx, "output_quantity", e.target.value)
+                  }
+                />
 
-              <label>Remarks</label>
-              <textarea
-                value={step.remarks}
-                disabled={orderStatus === "Completed"}
-                onChange={(e) => handleChange(idx, "remarks", e.target.value)}
-              />
-            </div>
-          ))}
+                <label>Remarks</label>
+                <textarea
+                  value={step.remarks}
+                  disabled={orderStatus === "Completed"}
+                  onChange={(e) => handleChange(idx, "remarks", e.target.value)}
+                />
+              </div>
+            );
+          })}
 
           {orderStatus === "In Progress" && formData.length > 0 && (
             <button type="submit" className={styles.submitBtn}>

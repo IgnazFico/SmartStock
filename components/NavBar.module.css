@@ -3,11 +3,11 @@
   padding-top: 20px;
   background-color: #074d6f;
   color: #c3ecff;
-  min-height: 93vh; /* Use full height */
+  min-height: 93vh;
   max-height: 100vh;
   margin: 20px 0px 20px 0px;
   border-radius: 0px 15px 15px 0px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.27); /* Soft shadow */
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.27);
   font-weight: 700;
 }
 
@@ -15,7 +15,7 @@
   display: flex;
   gap: 10px;
   margin: auto;
-  align-items: center; /* Align items vertically to the center */
+  align-items: center;
   padding: 10px;
   font-family: Montserrat;
   font-weight: 700;
@@ -34,14 +34,14 @@
 }
 
 .verticalNav h3 {
-  margin: 0; /* Remove margin to align perfectly with the image */
+  margin: 0;
   display: flex;
-  align-items: center; /* Ensure the text aligns with the logo */
+  align-items: center;
 }
 
 .verticalNav ul {
   padding: 0;
-  margin-top: 30px;
+  margin-top: 5px;
   padding: 5px;
 }
 
@@ -59,7 +59,8 @@
     brightness(102%) contrast(101%);
 }
 
-.dropdown {
+.dropdown,
+.company {
   cursor: pointer;
   user-select: none;
 }
@@ -68,21 +69,21 @@
 .verticalNav div {
   display: flex;
   padding: 10px;
-  text-decoration: none; /* Removes underline */
-  color: inherit; /* Inherits color from parent (li) or specified color */
+  text-decoration: none;
+  color: inherit;
   transition: background-color 0.3s ease;
   border-radius: 3px;
   align-items: center;
 }
 
 .verticalNav a:hover,
-.verticalNav div:hover {
+.dropdown:hover {
   background-color: #c3ecff;
   color: #222222;
 }
 
 .verticalNav a:hover img,
-.verticalNav div:hover img {
+.dropdown:hover img {
   filter: invert(5%) sepia(14%) saturate(15%) hue-rotate(319deg)
     brightness(104%) contrast(82%);
 }

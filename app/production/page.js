@@ -1,12 +1,20 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./styles.module.css";
 
 export default function ProductionOrders() {
+  const { status } = useSession();
   const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth");
+    }
+  }, [status]);
 
   useEffect(() => {
     fetch("/api/productionOrderList", { cache: "no-store" })
@@ -21,8 +29,8 @@ export default function ProductionOrders() {
       });
   }, []);
 
-  const handleRowClick = (prod_order_ID) => {
-    router.push(`/production-orders/${prod_order_ID}`);
+  const handleRowClick = (prod_order_id) => {
+    router.push(`/production-orders/${prod_order_id}`);
   };
 
   const handleCreate = () => {
@@ -55,11 +63,11 @@ export default function ProductionOrders() {
           <tbody>
             {orders.map((order) => (
               <tr
-                key={order.prod_order_ID}
+                key={order.prod_order_id}
                 className={styles.clickableRow}
-                onClick={() => handleRowClick(order.prod_order_ID)}
+                onClick={() => handleRowClick(order.prod_order_id)}
               >
-                <td>{order.prod_order_ID}</td>
+                <td>{order.prod_order_id}</td>
                 <td>{order.item_id}</td>
                 <td>{order.quantity}</td>
                 <td>{new Date(order.order_date).toLocaleDateString()}</td>

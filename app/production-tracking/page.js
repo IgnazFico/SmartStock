@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./styles.module.css"; // import the styles
 
 export default function ProductionTrackingPage() {
+  const { status } = useSession();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth");
+    }
+  }, [status]);
 
   useEffect(() => {
     async function fetchReleasedOrders() {
@@ -52,15 +60,15 @@ export default function ProductionTrackingPage() {
           </thead>
           <tbody>
             {orders.map((order) => (
-              <tr key={order.prod_order_ID}>
-                <td>{order.prod_order_ID}</td>
+              <tr key={order.prod_order_id}>
+                <td>{order.prod_order_id}</td>
                 <td>{order.item_id}</td>
                 <td>{order.quantity}</td>
                 <td>{order.due_date?.slice(0, 10)}</td>
                 <td>
                   <button
                     className={styles.trackButton}
-                    onClick={() => handleTrackClick(order.prod_order_ID)}
+                    onClick={() => handleTrackClick(order.prod_order_id)}
                   >
                     Track
                   </button>

@@ -19,9 +19,6 @@ export async function GET(req) {
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
-    // Step 2: Find the associated process (if any)
-    const process = await db.collection("process").findOne({ item_id });
-
     return NextResponse.json({
       description: item.description,
       process_id: process?.process_ID || null,

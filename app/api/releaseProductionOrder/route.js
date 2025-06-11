@@ -3,9 +3,9 @@ import connect from "@/utils/db";
 
 export async function POST(req) {
   const body = await req.json();
-  const { prod_order_ID } = body;
+  const { prod_order_id } = body;
 
-  if (!prod_order_ID) {
+  if (!prod_order_id) {
     return NextResponse.json(
       { message: "Production Order Unavailable" },
       { status: 400 }
@@ -18,7 +18,7 @@ export async function POST(req) {
     // 1. Update the production order's status to "Released"
     const result = await db
       .collection("production_order")
-      .updateOne({ prod_order_ID }, { $set: { status: "Released" } });
+      .updateOne({ prod_order_id }, { $set: { status: "Released" } });
 
     if (result.modifiedCount === 0) {
       return NextResponse.json(

@@ -7,25 +7,36 @@ export async function POST(req) {
   try {
     const db = await connect();
 
-    const insertOps = payload.map((entry) => {
+    const insertOps = payload.map(async (entry) => {
       const {
         prod_order_id,
         process_id,
-        input_quantity,
+        materials,
         output_quantity,
         status,
         remarks,
       } = entry;
 
-      return db.collection("production_tracking").insertOne({
-        prod_order_ID: prod_order_id,
+      await db.collection("production_tracking").insertOne({
+        prod_order_id,
         process_id,
-        input_quantity: Number(input_quantity),
         output_quantity: Number(output_quantity),
         status,
         remarks,
         time_submitted: new Date(),
       });
+
+      // Normalize materials and insert into production_material_tracking
+      const materialDocs = materials.map((material) => ({
+        prod_order_id,
+        process_id,
+        material_id: material.material_id,
+        quantity: Number(material.quantity),
+      }));
+
+      await db
+        .collection("production_material_tracking")
+        .insertMany(materialDocs);
     });
 
     await Promise.all(insertOps);
@@ -33,14 +44,14 @@ export async function POST(req) {
     await db
       .collection("production_tracking")
       .updateMany(
-        { prod_order_ID: payload[0].prod_order_id },
+        { prod_order_id: payload[0].prod_order_id },
         { $set: { status: "Completed" } }
       );
 
     await db
       .collection("production_order")
       .updateOne(
-        { prod_order_ID: payload[0].prod_order_id },
+        { prod_order_id: payload[0].prod_order_id },
         { $set: { status: "Completed" } }
       );
 

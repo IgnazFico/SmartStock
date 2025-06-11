@@ -4,21 +4,40 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const db = await connect();
-    const data = await db
+
+    // Step 1: Fetch 5 lowest raw material stocks
+    const inventory = await db
       .collection("rm_inventory")
       .find({})
-      .sort({ quantity: 1 }) // ascending = lowest first
+      .sort({ quantity: 1 })
       .limit(5)
       .toArray();
 
-    const result = data.map((item) => ({
+    // Step 2: Extract all part_numbers
+    const partNumbers = inventory.map((item) => item.part_number);
+
+    // Step 3: Fetch corresponding materials with thresholds
+    const materials = await db
+      .collection("material")
+      .find({ material_id: { $in: partNumbers } })
+      .toArray();
+
+    // Step 4: Create a map of part_number to threshold
+    const thresholdMap = {};
+    materials.forEach((mat) => {
+      thresholdMap[mat.material_id] = mat.threshold ?? 0; // fallback to 0 if threshold not set
+    });
+
+    // Step 5: Combine inventory with thresholds
+    const result = inventory.map((item) => ({
       part_number: item.part_number,
       quantity: item.quantity,
+      threshold: thresholdMap[item.part_number] ?? 0,
     }));
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching rm_inventory:", error);
+    console.error("Error fetching stock level:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
