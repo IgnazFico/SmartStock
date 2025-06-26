@@ -60,6 +60,16 @@ export async function POST(req) {
           );
           invTimeSubmittedForLog = existingRM.time_submitted;
         } else {
+           // CEK DUPLIKAT RM_ID DI SELURUH LOCATOR AKTIF
+          const duplicate = await db.collection("inv_raw_material").findOne({
+            rm_ID,
+              });
+               if (duplicate) {
+                  return NextResponse.json(
+                    { message: `Duplicate RM_ID. This material is already in inventory.` },
+                    { status: 400 }
+                  );
+                }
           // Insert new record
           await db.collection("inv_raw_material").insertOne({
             rm_ID,

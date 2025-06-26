@@ -82,6 +82,7 @@ const RawMaterialPage = () => {
     [records]
   );
 
+
   if (loading) return <p>Loading...</p>;
 
   if (!session) {
@@ -91,6 +92,7 @@ const RawMaterialPage = () => {
 
   const onSearchTermChange = (event) => {
     setSearchTerm(event.target.value);
+    handleSearchChange(event.target.value);
   };
 
   const totalQuantity = filteredRecords.reduce(
