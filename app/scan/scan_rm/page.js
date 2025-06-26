@@ -146,7 +146,7 @@ export default function Scan() {
       const [
         rm_ID,
         warehouse_ID,
-        part_number,
+        part_number,  
         quantity,
         po_ID,
         id,
@@ -157,14 +157,14 @@ export default function Scan() {
         rm_ID &&
         warehouse_ID &&
         part_number &&
-        quantity &&
+        quantity && 
         po_ID &&
         id &&
         worker_barcode
       ) {
         const newRecord = {
           rm_ID,
-          warehouse_ID,
+          warehouse_ID, 
           part_number,
           quantity: parseInt(quantity, 10),
           locator,

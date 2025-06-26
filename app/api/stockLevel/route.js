@@ -7,7 +7,7 @@ export async function GET() {
 
     // Step 1: Fetch 5 lowest raw material stocks
     const inventory = await db
-      .collection("rm_inventory")
+      .collection("inv_raw_material")
       .find({})
       .sort({ quantity: 1 })
       .limit(5)

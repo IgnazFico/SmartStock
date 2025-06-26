@@ -200,7 +200,7 @@ const QRCodeGenerator = () => {
     const templates = [];
     for (let i = 0; i < copy; i++) {
       const uniqueId = generateUniqueId();
-      // QR: rm_ID|warehouse_ID|part_number|quantity|po_ID|uniqueId|workerBarcode
+
       const qrData = [
         rm_ID,
         warehouse_ID,

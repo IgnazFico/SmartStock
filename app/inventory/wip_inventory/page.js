@@ -69,14 +69,18 @@ const WIPInventoryPage = () => {
       } else {
         const filtered = records.filter(
           (record) =>
-            record.part_number.toLowerCase().includes(term.toLowerCase()) ||
-            record.locator.toLowerCase().includes(term.toLowerCase())
-        );
-        setFilteredRecords(filtered);
+           (record.part_number?.toLowerCase() || "").includes(term.toLowerCase()) ||
+            (record.locator?.toLowerCase() || "").includes(term.toLowerCase())
+            );
+              setFilteredRecords(filtered);
       }
     }, 500),
     [records]
   );
+
+  useEffect(() => {
+  handleSearchChange(searchTerm);
+}, [searchTerm, records]);
 
   if (loading) return <p>Loading...</p>;
 
