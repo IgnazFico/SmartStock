@@ -45,17 +45,16 @@ export async function GET(req) {
       };
 
       // Sum across 3 inventories
-      const qtyInventory = await sumInventory("Inventory", "part_number");
+      const qtyInventory = await sumInventory("inventory", "part_number");
       const qtyRM = await sumInventory("rm_inventory", "part_number");
 
       result.push({
-        material_id: component_id,
-        description: materialInfo?.description || "",
+        material_used: component_id,
         required_qty,
         unit,
         available_qty: qtyInventory + qtyRM,
         sources: {
-          Inventory: qtyInventory,
+          inventory: qtyInventory,
           rm_inventory: qtyRM,
         },
       });

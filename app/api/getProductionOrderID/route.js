@@ -11,11 +11,11 @@ export async function GET() {
     .limit(1)
     .toArray();
 
-  let nextID = "PO001"; // default
+  let nextID = "PRD001"; // default
   if (latest.length > 0) {
-    const currentNum = parseInt(latest[0].prod_order_id.replace("PO", ""), 10);
+    const currentNum = parseInt(latest[0].prod_order_id.replace("PRD", ""), 10);
     const newNum = currentNum + 1;
-    nextID = `PO${newNum.toString().padStart(3, "0")}`;
+    nextID = `PRD${newNum.toString().padStart(3, "0")}`;
   }
 
   return new Response(JSON.stringify({ prod_order_id: nextID }), {

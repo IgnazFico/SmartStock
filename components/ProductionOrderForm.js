@@ -113,7 +113,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
     setMaterials(updated);
   }, [formData?.quantity, materials]);
 
-  const handleSubmit = async () => {
+  const handleSave = async () => {
     let finalData = { ...formData };
 
     if (!formData.prod_order_id) {
@@ -138,16 +138,35 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
   };
 
   const handleRelease = async () => {
-    let finalData = { ...formData };
+    try {
+      const insufficient = materials.filter(
+        (mat) => mat.available_qty < mat.calculated_qty
+      );
 
-    const res = await fetch("/api/releaseProductionOrder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prod_order_id: finalData.prod_order_id }),
-    });
+      if (insufficient.length > 0) {
+        const message = insufficient
+          .map(
+            (mat) =>
+              `${mat.material_id}: Required ${mat.calculated_qty}, Available ${mat.available_qty}`
+          )
+          .join("\n");
 
-    const data = await res.json();
-    alert(data.message || "Order released.");
+        alert("Cannot release order. Insufficient stock:\n" + message);
+        return;
+      }
+
+      const res = await fetch("/api/releaseProductionOrder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prod_order_id: formData.prod_order_ID }),
+      });
+
+      const data = await res.json();
+      alert(data.message || "Order released.");
+    } catch (error) {
+      console.error("Error during release:", error);
+      alert("Error releasing order.");
+    }
   };
 
   return (
@@ -296,8 +315,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
         <table className={styles.materialsTable}>
           <thead>
             <tr>
-              <th>Material ID</th>
-              <th>Description</th>
+              <th>Material Needs</th>
               <th>Required Qty</th>
               <th>Unit</th>
               <th>Inventory Available</th>
@@ -306,8 +324,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
           <tbody>
             {materials.map((mat, idx) => (
               <tr key={idx}>
-                <td>{mat.material_id}</td>
-                <td>{mat.description}</td>
+                <td>{mat.material_used}</td>
                 <td>{Math.ceil(mat.calculated_qty)}</td>
                 <td>{mat.unit}</td>
                 <td>{mat.available_qty}</td>
@@ -317,7 +334,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
         </table>
       )}
 
-      <button className={styles.addButton} onClick={handleSubmit}>
+      <button className={styles.addButton} onClick={handleSave}>
         Save Order
       </button>
       <button className={styles.addButton} onClick={handleRelease}>

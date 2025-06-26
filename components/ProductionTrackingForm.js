@@ -21,12 +21,10 @@ export default function ProductionTrackingForm({ prodOrderId }) {
         setItemId(order.item_id);
         setOrderStatus(order.status || "Released");
 
-        // Fetch process steps
         const stepRes = await fetch(`/api/process?item_id=${order.item_id}`);
         const steps = await stepRes.json();
         setProcessSteps(steps);
 
-        // Fetch process → material mapping
         const matRes = await fetch(
           `/api/processMaterials?item_id=${order.item_id}`
         );
@@ -40,7 +38,6 @@ export default function ProductionTrackingForm({ prodOrderId }) {
 
           setOrderStatus(trackingData.status || order.status);
 
-          // For now: assume single-tracking mode (if multiple needed, use array map)
           setFormData([
             {
               process_id: trackingData.process_id,
@@ -56,11 +53,10 @@ export default function ProductionTrackingForm({ prodOrderId }) {
           );
           const trackingData = await trackingRes.json();
 
-          // Fetch actual used materials from production_material_tracking
           const matTrackingRes = await fetch(
             `/api/productionMaterialsUsed?prod_order_id=${prodOrderId}`
           );
-          const usedMaterials = await matTrackingRes.json(); // Should return array of material entries
+          const usedMaterials = await matTrackingRes.json();
 
           setOrderStatus(trackingData.status || order.status);
 
@@ -79,7 +75,7 @@ export default function ProductionTrackingForm({ prodOrderId }) {
           setFormData(
             steps.map((step) => ({
               process_id: step.process_ID,
-              output_quantity: trackingData.output_quantity, // Optional: adjust if tracking multiple
+              output_quantity: trackingData.output_quantity,
               status: trackingData.status,
               remarks: trackingData.remarks,
               materials: processGroupedMaterials[step.process_ID] || [],
