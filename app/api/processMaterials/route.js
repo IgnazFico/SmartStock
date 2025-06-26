@@ -39,7 +39,6 @@ export async function GET(req) {
       if (!grouped[pid]) grouped[pid] = [];
       grouped[pid].push({
         material_id: mat.material_ID,
-        quantity: mat.quantity,
       });
     }
 

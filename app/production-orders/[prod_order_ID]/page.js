@@ -1,11 +1,17 @@
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import ProductionOrderForm from "@/components/ProductionOrderForm"; // adjust path if needed
+"use client";
 
-export default async function ProductionOrderDetail({ params }) {
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import ProductionOrderForm from "@/components/ProductionOrderForm";
+
+export default function ProductionOrderDetail({ params }) {
   const { status } = useSession();
   const router = useRouter();
   const { prod_order_id } = params;
+
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -13,14 +19,28 @@ export default async function ProductionOrderDetail({ params }) {
     }
   }, [status]);
 
-  const res = await fetch(`http://localhost:3000/api/productionOrderList`, {
-    cache: "no-store",
-  });
-  const data = await res.json();
+  useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        const res = await fetch(`/api/productionOrderList`, {
+          cache: "no-store",
+        });
+        const data = await res.json();
+        const foundOrder = data.find((o) => o.prod_order_id === prod_order_id);
+        setOrder(foundOrder || null);
+      } catch (error) {
+        console.error("Failed to fetch order:", error);
+        setOrder(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const order = data.find((o) => o.prod_order_id === prod_order_id);
+    fetchOrder();
+  }, [prod_order_id]);
 
-  if (!order) return <div>Production Order Unavailable</div>;
+  if (loading) return <p>Loading...</p>;
+  if (!order) return <p>Production Order Unavailable</p>;
 
   return (
     <div>
