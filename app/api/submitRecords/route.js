@@ -74,6 +74,18 @@ export async function POST(req) {
           finishGoodId = existingFG._id; // <-- Ambil _id dari data yang sudah ada
           invTimeSubmittedForLog = existingFG.time_submitted;
         } else {
+
+           const duplicate = await db.collection("inv_finish_good").findOne({
+                Inventory_ID,
+                // Jika ingin benar-benar unik, hapus filter locator/prod_order_id
+              });
+              if (duplicate) {
+                return NextResponse.json(
+                  { message: `Duplicate Inventory ID. This ID is already in inventory.` },
+                  { status: 400 }
+                );
+              }
+
           // Insert new record
           const insertResult = await db.collection("inv_finish_good").insertOne({
             Inventory_ID,

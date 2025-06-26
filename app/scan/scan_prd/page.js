@@ -151,6 +151,15 @@ export default function Scan() {
         uniqueId &&
         workerBarcodeQR
       ) {
+         // CEK DUPLIKAT RM_ID
+      const alreadyScanned = scanRecordsPrd.some(
+          (rec) => rec.wip_ID === WipID
+        );
+        if (alreadyScanned) {
+          setError("This WIP ID has already been scanned in.");
+          return;
+        }
+         setError("");           
         const newRecord = {
           id: uniqueId,
           wip_ID: WipID,
@@ -162,7 +171,7 @@ export default function Scan() {
           worker_barcode: workerBarcodeQR,
           time_updated: new Date().toISOString(),
         };
-        setScanRecordsPrd((prevRecords) => [...prevRecords, newRecord]);
+        setScanRecordsPrd((prevRecords) => [newRecord, ...prevRecords]);
       }
       event.target.value = "";
       if (qrInputRef.current) qrInputRef.current.value = "";

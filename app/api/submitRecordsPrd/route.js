@@ -57,6 +57,16 @@ export async function POST(req) {
           );
           invTimeSubmittedForLog = existingProduction.time_submitted;
         } else {
+// Cek wip_ID di locator manapun
+          const duplicate = await db.collection("inv_wip_production").findOne({
+                wip_ID,
+              });
+              if (duplicate) {
+                return NextResponse.json(
+                  { message: `Duplicate WIP ID. This WIP is already in inventory.` },
+                  { status: 400 }
+                );
+              }
           // Insert baru
           await db.collection("inv_wip_production").insertOne({
             wip_ID,

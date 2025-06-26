@@ -164,6 +164,13 @@ export default function Scan() {
         time_submitted &&
         locator
       ) {
+        const alreadyScanned = scanRecords.some(
+          (rec) => rec.Inventory_ID === Inventory_ID
+        );
+        if (alreadyScanned) {
+          setError("This Inventory ID has already been scanned in.");
+          return;
+        }
         const newRecord = {
           Inventory_ID,
           part_number,
@@ -173,7 +180,7 @@ export default function Scan() {
           time_submitted,
           locator,
         };
-        setScanRecords((prevRecords) => [...prevRecords, newRecord]);
+        setScanRecords((prevRecords) => [newRecord, ...prevRecords]);
       }
 
       event.target.value = "";
