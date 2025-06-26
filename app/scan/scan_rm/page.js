@@ -162,6 +162,14 @@ export default function Scan() {
         id &&
         worker_barcode
       ) {
+        //cek duplicate rm_id
+        const alreadyScanned = scanRecordsRm.some(
+            (rec) => rec.rm_ID === rm_ID
+          );
+          if (alreadyScanned) {
+            setError("This RM_ID has already been scanned in.");
+            return;
+          }
         const newRecord = {
           rm_ID,
           warehouse_ID, 
