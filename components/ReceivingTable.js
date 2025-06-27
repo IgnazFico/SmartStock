@@ -4,12 +4,29 @@ import React, { useState, useEffect } from "react";
 import styles from "./ReceivingTable.module.css";
 
 const ReceivingTable = ({ records = [] }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  const [suppliers, setSuppliers] = useState([]);
-  const [materials, setMaterials] = useState([]);
-  const [poItems, setPoItems] = useState([]);
+const [currentPage, setCurrentPage] = useState(1);
+const [searchTerm, setSearchTerm] = useState("");
+const [statusFilter, setStatusFilter] = useState("All");
+const [selectedRecord, setSelectedRecord] = useState(null);
+const [suppliers, setSuppliers] = useState([]);
+const [materials, setMaterials] = useState([]);
+const [poItems, setPoItems] = useState([]);
+const [allRecords, setAllRecords] = useState([]);
+
+const fetchRecords = async () => {
+  try {
+    const res = await fetch("/api/receiving");
+    const data = await res.json();
+    setAllRecords(data);
+  } catch (error) {
+    console.error("Gagal fetch data PO:", error);
+  }
+};
+
+useEffect(() => {
+  fetchRecords();
+}, []);
+
   const recordsPerPage = 10;
 
   // Fetch suppliers and materials once
@@ -50,11 +67,16 @@ const ReceivingTable = ({ records = [] }) => {
     fetchPOItems();
   }, [selectedRecord]);
 
-  const filteredRecords = Array.isArray(records)
-    ? records.filter((r) =>
+  const filteredRecords = Array.isArray(allRecords)
+    ? allRecords.filter((r) =>
         [r.po_ID, r.supplier_ID, r.material_ID].some((field) =>
           (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())
         )
+      )
+      .filter((r) =>
+          statusFilter === "All"
+            ? true
+            : r.status.toLowerCase() === statusFilter.toLowerCase()
       )
     : [];
 
@@ -84,6 +106,7 @@ const ReceivingTable = ({ records = [] }) => {
 
       if (response.ok) {
         setSelectedRecord({ ...selectedRecord, ...updatedData });
+        fetchRecords();
       }
     } catch (error) {
       console.error("Gagal mengupdate data:", error);
@@ -104,25 +127,40 @@ const ReceivingTable = ({ records = [] }) => {
   return (
     <div>
       <div className={styles.actions}>
-        <input
-          type="text"
-          placeholder="Search PO Number, Supplier, or Part..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(1);
-          }}
-          className={styles.searchInput}
-        />
-      </div>
+        <div className={styles.searchAndFilterGroup}>
+          <input
+            type="text"
+            placeholder="Search PO Number, Supplier, or Part..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className={styles.searchInput}
+          />
+          <select
+            className={styles.statusFilter}
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            aria-label="Filter by status"
+          >
+            <option value="All">All</option>
+            <option value="Received">Received</option>
+            <option value="Order">Order</option>
+          </select>
+        </div>
+    </div>
+
 
       {filteredRecords.length === 0 ? (
         <p>Tidak ada data Purchase Order.</p>
       ) : (
         <>
           <div className={styles.resultsSummary}>
-            {filteredRecords.length} records | Total Quantity:{" "}
-            {filteredRecords.reduce((sum, r) => sum + Number(r.quantity), 0)}
+            {filteredRecords.length} records 
           </div>
 
           <table className={styles.table}>

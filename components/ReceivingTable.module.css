@@ -247,3 +247,35 @@
   background-color: #b3b3b3;
   color: #000000;
 }
+
+.statusFilter {
+  padding: 0.5rem 0.75rem;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1.5px solid #a8c0d8;
+  background-color: #fff;
+  min-width: 120px;
+  box-shadow: inset 0 1.5px 4px rgba(0, 0, 0, 0.08);
+  color: #08476f;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.statusFilter:focus {
+  outline: none;
+  border-color: #0a5775;
+  box-shadow: 0 0 6px rgba(10, 87, 117, 0.3);
+}
+
+.statusFilter:hover {
+  border-color: #0a5775;
+  background-color: #f0faff;
+  cursor: pointer;
+}
+
+.searchAndFilterGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px; 
+  flex-wrap: wrap;
+}

@@ -75,7 +75,7 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
         return;
       }
 
-      alert(`PR ${status} berhasil!`);
+      alert(`PR ${status}`);
       await refreshData();
       onClose();
     } catch (error) {
@@ -100,7 +100,7 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
     for (const item of items) {
       if (!item.selectedSupplierID) {
         alert(
-          `Supplier belum dipilih untuk material ${item.material_ID}. Harap pilih supplier.`
+          `Supplier not yet selected for materials ${item.material_ID}. Please select a supplier.`
         );
         return;
       }
@@ -146,12 +146,12 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
 
       if (!res.ok) {
         const errorText = await res.text();
-        alert(`Gagal convert ke PO: ${errorText}`);
+        alert(`Failed to convert to PO: ${errorText}`);
         setLoading(false);
         return;
       }
 
-      alert("PO berhasil dibuat untuk semua supplier!");
+      alert("PO successfully created for all suppliers!");
       await refreshData();
       onClose();
     } catch (error) {
