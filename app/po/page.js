@@ -4,11 +4,24 @@ import React, { useEffect, useState } from "react";
 import PurchaseOrderTable from "@/components/PurchaseOrderTable";
 import FormPurchaseOrder from "@/app/formPO/page";
 import styles from "./style.module.css";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function POPage() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth"); // redirect ke halaman login
+    }
+  }, [status]);
+
+  if (status === "loading") return <p>Loading...</p>;
+  if (status === "unauthenticated") return null;
 
   const handleRecordClick = (record) => {
     alert(`PO dipilih: ${record.po_ID}`);
