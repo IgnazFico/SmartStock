@@ -13,30 +13,32 @@ export default function ReceivingPage() {
   const router = useRouter();
   
     useEffect(() => {
-      if (status === "unauthenticated") {
-        router.push("/auth"); // redirect ke halaman login
-      }
-    }, [status]);
-  
-    if (status === "loading") return <p>Loading...</p>;
-    if (status === "unauthenticated") return null;
-  
+    // Autentikasi
+    if (status === "unauthenticated") {
+      router.push("/auth");
+      return;
+    }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch("/api/receiving");
-        const data = await res.json();
-        setRecords(data);
-      } catch (err) {
-        console.error("Gagal ambil data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Fetch data hanya jika sudah login
+    if (status === "authenticated") {
+      const fetchData = async () => {
+        try {
+          const res = await fetch("/api/receiving");
+          if (!res.ok) throw new Error("Gagal ambil data");
+          const data = await res.json();
+          setRecords(data);
+        } catch (err) {
+          console.error("Gagal ambil data:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    fetchData();
-  }, []);
+      fetchData();
+    }
+  }, [status]);
+
+  if (status === "loading" || loading) return <p>Loading...</p>;
 
   return (
     <div className={styles.wrapper}>

@@ -14,50 +14,53 @@ export default function POPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  // Autentikasi dan Fetch PO Data
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/auth"); // redirect ke halaman login
+      router.push("/auth");
+      return;
+    }
+
+    if (status === "authenticated") {
+      const fetchData = async () => {
+        try {
+          const res = await fetch("/api/po");
+          const data = await res.json();
+          setRecords(Array.isArray(data) ? data : []);
+        } catch (err) {
+          console.error("Gagal ambil data:", err);
+          setRecords([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchData();
     }
   }, [status]);
-
-  if (status === "loading") return <p>Loading...</p>;
-  if (status === "unauthenticated") return null;
 
   const handleRecordClick = (record) => {
     alert(`PO dipilih: ${record.po_ID}`);
   };
 
   const handleNewPOSuccess = async () => {
-  setShowForm(false);
-  try {
-    const res = await fetch("/api/po");
-    const data = await res.json();
-    setRecords(Array.isArray(data) ? data : []);
-  } catch (err) {
-    console.error("Gagal fetch ulang data PO:", err);
-    setRecords([]);
-  }
-};
+    setShowForm(false);
+    try {
+      const res = await fetch("/api/po");
+      const data = await res.json();
+      setRecords(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Gagal fetch ulang data PO:", err);
+      setRecords([]);
+    }
+  };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch("/api/po");
-        const data = await res.json();
-        setRecords(data);
-      } catch (err) {
-        console.error("Gagal ambil data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  // Loading saat session atau data belum siap
+  if (status === "loading" || loading) return <p>Loading...</p>;
 
   return (
     <div className={styles.wrapper}>
-      <h1 className={styles.pageTitle}>List Purchase Order</h1>
+      <h1 className={styles.pageTitle}>Purchase Order List</h1>
 
       {showForm && (
         <FormPurchaseOrder

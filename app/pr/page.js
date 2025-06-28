@@ -15,51 +15,49 @@ export default function PRPage() {
   const router = useRouter();
   
     useEffect(() => {
-      if (status === "unauthenticated") {
-        router.push("/auth"); // redirect ke halaman login
-      }
-    }, [status]);
-  
-    if (status === "loading") return <p>Loading...</p>;
-    if (status === "unauthenticated") return null;
-  
+    if (status === "unauthenticated") {
+      router.push("/auth");
+      return;
+    }
+
+    if (status === "authenticated") {
+      const fetchData = async () => {
+        try {
+          const res = await fetch("/api/pr");
+          const data = await res.json();
+          setRecords(Array.isArray(data) ? data : []);
+        } catch (err) {
+          console.error("Gagal ambil data:", err);
+          setRecords([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchData();
+    }
+  }, [status]);
 
   const handleRecordClick = (record) => {
   };
 
   const handleNewPRSuccess = async () => {
-  setShowForm(false);
-  try {
-    const res = await fetch("/api/pr");
-    const data = await res.json();
-    setRecords(Array.isArray(data) ? data : []);
-  } catch (err) {
-    console.error("Gagal fetch ulang data PR:", err);
-    setRecords([]);
-  }
-};
+    setShowForm(false);
+    try {
+      const res = await fetch("/api/pr");
+      const data = await res.json();
+      setRecords(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Gagal fetch ulang data PR:", err);
+      setRecords([]);
+    }
+  };
 
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch("/api/pr");
-        const data = await res.json();
-        setRecords(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Gagal ambil data:", err);
-        setRecords([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  if (status === "loading" || loading) return <p>Loading...</p>;
 
   return (
     <div className={styles.wrapper}>
-      <h1 className={styles.pageTitle}>List Purchase Request</h1>
+      <h1 className={styles.pageTitle}>Purchase Request List</h1>
 
       {showForm && (
         <FormPurchaseRequest
