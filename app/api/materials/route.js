@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const db = await connect();
     const materials = await db.collection("material")
-      .find({}, { projection: { material_ID: 1, material: 1, _id: 0 } })
+      .find({}, { projection: { material_ID: 1, material: 1, cost: 1, _id: 0 } })
       .toArray();
 
     return new Response(JSON.stringify(materials), {
