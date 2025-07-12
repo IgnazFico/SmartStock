@@ -28,7 +28,7 @@ export default function ProductionTrackingForm({ prodOrderId }) {
         const matRes = await fetch(
           `/api/processMaterials?item_id=${order.item_id}`
         );
-        const processMaterials = await matRes.json(); // Should return: { [process_ID]: [{ material_id, default_quantity }] }
+        const processMaterials = await matRes.json(); // Should return: { [process_id]: [{ component_id, default_quantity }] }
 
         if (order.status === "In Progress") {
           const trackingRes = await fetch(
@@ -66,7 +66,7 @@ export default function ProductionTrackingForm({ prodOrderId }) {
               processGroupedMaterials[mat.process_id] = [];
             }
             processGroupedMaterials[mat.process_id].push({
-              material_id: mat.material_id,
+              component_id: mat.component_id,
               quantity: mat.quantity,
             });
           });
@@ -74,24 +74,24 @@ export default function ProductionTrackingForm({ prodOrderId }) {
           // Fill formData with fetched quantities
           setFormData(
             steps.map((step) => ({
-              process_id: step.process_ID,
+              process_id: step.process_id,
               output_quantity: trackingData.output_quantity,
               status: trackingData.status,
               remarks: trackingData.remarks,
-              materials: processGroupedMaterials[step.process_ID] || [],
+              materials: processGroupedMaterials[step.process_id] || [],
             }))
           );
         } else {
           // Initialize fresh formData with materials
           setFormData(
             steps.map((step) => ({
-              process_id: step.process_ID,
+              process_id: step.process_id,
               output_quantity: 0,
               status: "Planned",
               remarks: "",
               materials:
-                processMaterials[step.process_ID]?.map((mat) => ({
-                  material_id: mat.material_id,
+                processMaterials[step.process_id]?.map((mat) => ({
+                  component_id: mat.component_id,
                   quantity: 0,
                 })) || [],
             }))
@@ -186,7 +186,7 @@ export default function ProductionTrackingForm({ prodOrderId }) {
 
           {formData.map((step, idx) => {
             const stepInfo = processSteps.find(
-              (p) => p.process_ID === step.process_id
+              (p) => p.process_id === step.process_id
             );
             return (
               <div className={styles.card} key={idx}>
@@ -197,7 +197,7 @@ export default function ProductionTrackingForm({ prodOrderId }) {
 
                 {step.materials?.map((mat, midx) => (
                   <div key={midx}>
-                    <label>Material {mat.material_id} Used</label>
+                    <label>Material {mat.component_id} Used</label>
                     <input
                       type="number"
                       value={mat.quantity}

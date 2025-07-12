@@ -147,7 +147,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
         const message = insufficient
           .map(
             (mat) =>
-              `${mat.material_id}: Required ${mat.calculated_qty}, Available ${mat.available_qty}`
+              `${mat.component_id}: Required ${mat.calculated_qty}, Available ${mat.available_qty}`
           )
           .join("\n");
 
@@ -158,7 +158,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
       const res = await fetch("/api/releaseProductionOrder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prod_order_id: formData.prod_order_ID }),
+        body: JSON.stringify({ prod_order_id: formData.prod_order_id }),
       });
 
       const data = await res.json();

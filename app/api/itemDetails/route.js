@@ -21,7 +21,7 @@ export async function GET(req) {
 
     return NextResponse.json({
       description: item.description,
-      process_id: process?.process_ID || null,
+      process_id: process?.process_id || null,
     });
   } catch (err) {
     console.error("API error:", err);

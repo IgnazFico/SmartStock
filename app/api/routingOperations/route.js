@@ -12,19 +12,19 @@ export async function GET(req) {
 
   // Join process_operation and operation table based on operation_ID
   const pipeline = [
-    { $match: { process_ID: process_id } },
+    { $match: { process_id: process_id } },
     {
       $lookup: {
-        from: "operations",
-        localField: "operation_ID",
-        foreignField: "operation_ID",
+        from: "operation",
+        localField: "operation_id",
+        foreignField: "operation_id",
         as: "operationDetails",
       },
     },
     { $unwind: "$operationDetails" },
     {
       $project: {
-        operation: "$operation_ID",
+        operation: "$operation_id",
         nextOperation: "",
         status: "Planned",
         workCenter: "$operationDetails.work_center",

@@ -24,21 +24,21 @@ export async function GET(req) {
       return NextResponse.json({});
     }
 
-    const processIds = processes.map((p) => p.process_ID);
+    const processIds = processes.map((p) => p.process_id);
 
     // 2. Get all process_material mappings
     const materials = await db
       .collection("process_material")
-      .find({ process_ID: { $in: processIds } })
+      .find({ process_id: { $in: processIds } })
       .toArray();
 
-    // 3. Group by process_ID
+    // 3. Group by process_id
     const grouped = {};
     for (const mat of materials) {
-      const pid = mat.process_ID;
+      const pid = mat.process_id;
       if (!grouped[pid]) grouped[pid] = [];
       grouped[pid].push({
-        material_id: mat.material_ID,
+        component_id: mat.component_id,
       });
     }
 

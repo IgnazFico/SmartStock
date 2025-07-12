@@ -23,14 +23,13 @@ export async function POST(req) {
         output_quantity: Number(output_quantity),
         status,
         remarks,
-        time_submitted: new Date(),
       });
 
       // Normalize materials and insert into production_material_tracking
       const materialDocs = materials.map((material) => ({
         prod_order_id,
         process_id,
-        material_id: material.material_id,
+        component_id: material.component_id,
         quantity: Number(material.quantity),
       }));
 

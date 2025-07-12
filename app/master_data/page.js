@@ -17,7 +17,7 @@ export default function InsertMasterData() {
   const [isItemModalOpen, setItemModalOpen] = useState(false);
   const [isLocatorModalOpen, setLocatorModalOpen] = useState(false);
 
-  const itemMasterColumns = ["item_id", "part_number", "description"];
+  const itemMasterColumns = ["item_id", "toy_number", "description"];
   const locatorColumns = ["locator", "warehouse"];
 
   useEffect(() => {
@@ -46,14 +46,14 @@ export default function InsertMasterData() {
   }, []);
 
   const handleAddItem = (formData) => {
-    const { item_id, part_number, description } = formData;
+    const { item_id, toy_number, description } = formData;
 
     fetch("/api/insertItem", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         item_id,
-        part_number,
+        toy_number,
         description,
       }),
     })

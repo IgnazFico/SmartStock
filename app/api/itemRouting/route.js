@@ -16,7 +16,7 @@ export async function POST(req) {
   try {
     // Insert main process record
     await db.collection("process").insertOne({
-      process_ID: process_id,
+      process_id,
       item_id: itemID,
       process_name,
       wip_code,
@@ -30,14 +30,14 @@ export async function POST(req) {
 
       // 2. Link to process_operation
       await db.collection("process_operation").insertOne({
-        process_ID: process_id,
-        operation_ID: newOperationID,
+        process_id,
+        operation_id: newOperationID,
       });
 
       // 3. Link required materials to this process
       for (const mat of materials) {
         await db.collection("process_material").insertOne({
-          process_ID: process_id,
+          process_id,
           material_ID: mat.materialID,
           quantity: Number(mat.quantity),
         });

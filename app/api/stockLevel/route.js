@@ -7,7 +7,7 @@ export async function GET() {
 
     // Step 1: Fetch 5 lowest raw material stocks
     const inventory = await db
-      .collection("inv_raw_material")
+      .collection("rm_inventory")
       .find({})
       .sort({ quantity: 1 })
       .limit(5)
@@ -19,13 +19,13 @@ export async function GET() {
     // Step 3: Fetch corresponding materials with thresholds
     const materials = await db
       .collection("material")
-      .find({ material_id: { $in: partNumbers } })
+      .find({ material_ID: { $in: partNumbers } })
       .toArray();
 
     // Step 4: Create a map of part_number to threshold
     const thresholdMap = {};
     materials.forEach((mat) => {
-      thresholdMap[mat.material_id] = mat.threshold ?? 0; // fallback to 0 if threshold not set
+      thresholdMap[mat.material_ID] = mat.threshold ?? 0; // fallback to 0 if threshold not set
     });
 
     // Step 5: Combine inventory with thresholds

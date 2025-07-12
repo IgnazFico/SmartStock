@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import connect from "../../../utils/db";
 
@@ -11,7 +13,15 @@ export async function GET() {
       .find({ status: { $ne: "Planned" } })
       .toArray();
 
-    return NextResponse.json({ orders });
+    const response = NextResponse.json({ orders });
+    response.headers.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate"
+    );
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+
+    return response;
   } catch (err) {
     console.error("Failed to fetch production orders:", err);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
