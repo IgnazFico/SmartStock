@@ -72,6 +72,12 @@ export async function POST(req) {
         status: po.status || "pending",
         received_date: po.received_date ? new Date(po.received_date) : null,
       });
+      // Update status PR jadi converted
+      const prCollection = db.collection("purchase_requests");
+      await prCollection.updateOne(
+        { pr_ID: po.pr_ID },
+        { $set: { status: "converted" } }
+      );
 
       // Detail Items dengan order_items_ID unik
       for (const item of po.items) {
@@ -93,7 +99,7 @@ export async function POST(req) {
 
     return NextResponse.json(
       {
-        message: `Berhasil insert ${insertPOResult.insertedCount} PO dan ${insertItemResult.insertedCount} item.`,
+        message: `Succesfully insert  PO and ${insertItemResult.insertedCount} item.`,
       },
       { status: 201 }
     );

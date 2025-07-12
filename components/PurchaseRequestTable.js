@@ -10,6 +10,7 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
   // Local state
   const [localRecords, setLocalRecords] = useState(records);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -26,11 +27,16 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
   }, [searchTerm]);
 
   // Filter records based on pr_ID or users_ID containing searchTerm
-  const filteredRecords = localRecords.filter((r) =>
-    [r?.pr_ID, r?.users_ID].some((field) =>
+  const filteredRecords = localRecords.filter((r) => {
+    const matchesSearch = [r?.pr_ID, r?.users_ID].some((field) =>
       String(field || "").toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+    );
+
+    const matchesStatus =
+      statusFilter === "All" || r.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   // Slice records for current page
   const currentRecords = filteredRecords.slice(
@@ -81,14 +87,30 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
   return (
     <div>
       <div className={styles.actions}>
-        <input
-          type="text"
-          placeholder="Search PR ID or User ID..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className={styles.searchInput}
-          aria-label="Search Purchase Requests"
-        />
+        <div className={styles.searchAndFilterGroup}>
+          <input
+            type="text"
+            placeholder="Search PR ID or User ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={styles.searchInput}
+            aria-label="Search Purchase Requests"
+          />
+
+          <select
+            className={styles.statusFilter}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filter by status"
+          >
+            <option value="All">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="converted">Converted</option>
+          </select>
+        </div>
+
         <button className={styles.newPRButton} onClick={onAddNewPR}>
           + New PR
         </button>

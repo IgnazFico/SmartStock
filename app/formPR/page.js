@@ -87,7 +87,7 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
 
     const isValid = items.every((item) => item.material_ID && item.quantity > 0);
     if (!isValid) {
-      setError("Harap isi material dan quantity yang valid untuk semua item.");
+      setError("Please fill in valid material and quantity for all items.");
       setLoading(false);
       return;
     }
@@ -113,7 +113,9 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
       }
 
       const saved = await res.json();
-      onSubmitSuccess?.(saved);
+alert(`✅ Purchase Request successfully saved! PR ID: ${saved.pr_ID}`);
+onSubmitSuccess?.(saved);
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -242,7 +244,7 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
         {error && <p className={styles.error}>{error}</p>}
 
         <button type="submit" className={styles.formButton} disabled={loading}>
-          {loading ? "Menyimpan..." : "Simpan PR"}
+          {loading ? "Menyimpan..." : "Save PR"}
         </button>
       </form>
     </div>

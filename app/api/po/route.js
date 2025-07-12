@@ -83,12 +83,6 @@ export async function POST(req) {
       console.warn("Tidak semua item PO berhasil disimpan.");
     }
 
-    // Update status PR jadi converted
-    await prCollection.updateOne(
-      { pr_ID: newPO.pr_ID },
-      { $set: { status: "converted" } }
-    );
-
     return NextResponse.json(
       { message: "PO dan items berhasil disimpan", po_ID: newPO_ID },
       { status: 201 }

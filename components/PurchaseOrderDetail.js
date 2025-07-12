@@ -39,6 +39,13 @@ const PurchaseOrderDetailModal = ({ record, onClose }) => {
 
   if (!record) return null;
 
+  // Hitung grand total cost
+  const grandTotalCost = poItems.reduce((acc, item) => {
+    const material = materialsList.find((m) => m.material_ID === item.material_ID);
+    const cost = material ? material.cost : 0;
+    return acc + cost * item.quantity;
+  }, 0);
+
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -53,13 +60,21 @@ const PurchaseOrderDetailModal = ({ record, onClose }) => {
         <ul>
           {poItems.map((item) => {
             const material = materialsList.find(m => m.material_ID === item.material_ID);
+            const cost = material ? material.cost : 0;
+            const totalCost = cost * item.quantity;
+
             return (
               <li key={item.order_items_ID}>
-                {material ? material.material : item.material_ID} — Quantity: {item.quantity}
+                {material ? material.material : item.material_ID} — 
+                Quantity: {item.quantity}, 
+                Cost: Rp{cost.toLocaleString()}, 
+                Total: Rp{totalCost.toLocaleString()}
               </li>
             );
           })}
         </ul>
+
+        <h4>Grand Total Cost: Rp{grandTotalCost.toLocaleString()}</h4>
 
         <div className={styles.modalActions}>
           <button onClick={onClose} className={styles.closeButton}>Close</button>
