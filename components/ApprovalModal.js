@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "./ApprovalModal.module.css";
+import { useSession } from "next-auth/react";
 
 const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
   const [remarks, setRemarks] = useState("");
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
-  const [items, setItems] = useState([]); 
-  // items akan di-extend jadi { ...item, selectedSupplierID }
+  const [items, setItems] = useState([]);
+  const { data: session } = useSession();
 
   useEffect(() => {
     setRemarks("");
@@ -206,7 +207,10 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
                     <select
                       value={item.selectedSupplierID}
                       onChange={(e) =>
-                        handleSupplierChange(item.request_item_ID, e.target.value)
+                        handleSupplierChange(
+                          item.request_item_ID,
+                          e.target.value
+                        )
                       }
                       disabled={loading}
                       className={styles.supplierDropdown}
@@ -231,7 +235,7 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
           </p>
         )}
 
-        {!isReadOnly && (
+        {!isReadOnly && session?.user?.position === "supervisor" && (
           <>
             <textarea
               placeholder="Remarks"
@@ -259,19 +263,24 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
           </>
         )}
 
-        {record.status.toLowerCase() === "approved" && (
-          <button
-            className={styles.convertButton}
-            onClick={handleConvertToPO}
-            disabled={
-              loading || items.some((item) => !item.selectedSupplierID)
-            }
-          >
-            {loading ? "Processing..." : "Convert to PO"}
-          </button>
-        )}
+        {record.status.toLowerCase() === "approved" &&
+          session?.user?.department === "purchasing" && (
+            <button
+              className={styles.convertButton}
+              onClick={handleConvertToPO}
+              disabled={
+                loading || items.some((item) => !item.selectedSupplierID)
+              }
+            >
+              {loading ? "Processing..." : "Convert to PO"}
+            </button>
+          )}
 
-        <button className={styles.closeButton} onClick={onClose} disabled={loading}>
+        <button
+          className={styles.closeButton}
+          onClick={onClose}
+          disabled={loading}
+        >
           Close
         </button>
       </div>

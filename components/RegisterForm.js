@@ -1,8 +1,10 @@
 import { useState } from "react";
 import styles from "./RegisterForm.module.css";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const RegisterForm = () => {
+  const { data: session } = useSession();
   const [formData, setFormData] = useState({
     name: "",
     department: "warehouse",
@@ -133,7 +135,7 @@ const RegisterForm = () => {
               onChange={handleChange}
               required
             >
-              <option value="warehouse">Warehouse</option>
+              <option value="logistics">Logistics</option>
               <option value="production">Production</option>
               <option value="purchasing">Purchasing</option>
               <option value="planner">Planner</option>
@@ -149,9 +151,9 @@ const RegisterForm = () => {
               onChange={handleChange}
               required
             >
-              <option value="staff">Staff</option>
-              <option value="supervisor">Supervisor</option>
-              <option value="leader">Leader</option>
+              <option value="Staff">Staff</option>
+              <option value="Supervisor">Supervisor</option>
+              <option value="Leader">Leader</option>
             </select>
           </div>
 

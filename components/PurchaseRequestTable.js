@@ -29,11 +29,12 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
   // Filter records based on pr_ID or users_ID containing searchTerm
   const filteredRecords = localRecords.filter((r) => {
     const matchesSearch = [r?.pr_ID, r?.users_ID].some((field) =>
-      String(field || "").toLowerCase().includes(searchTerm.toLowerCase())
+      String(field || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
     );
 
-    const matchesStatus =
-      statusFilter === "All" || r.status === statusFilter;
+    const matchesStatus = statusFilter === "All" || r.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -153,7 +154,11 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
                   <td>{r.pr_ID}</td>
                   <td>{r.users_ID}</td>
                   <td>{r.department}</td>
-                  <td>{r.request_date ? new Date(r.request_date).toISOString().split("T")[0] : ""}</td>
+                  <td>
+                    {r.request_date
+                      ? new Date(r.request_date).toISOString().split("T")[0]
+                      : ""}
+                  </td>
                   <td>{r.priority}</td>
                   <td>{r.status}</td>
                 </tr>
@@ -162,17 +167,22 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
           </table>
 
           <div className={styles.container}>
-            {Array.from({ length: Math.ceil(filteredRecords.length / recordsPerPage) }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => paginate(i + 1)}
-                className={`${styles.pageButton} ${currentPage === i + 1 ? styles.activePage : ""}`}
-                aria-current={currentPage === i + 1 ? "page" : undefined}
-                aria-label={`Go to page ${i + 1}`}
-              >
-                {i + 1}
-              </button>
-            ))}
+            {Array.from(
+              { length: Math.ceil(filteredRecords.length / recordsPerPage) },
+              (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => paginate(i + 1)}
+                  className={`${styles.pageButton} ${
+                    currentPage === i + 1 ? styles.activePage : ""
+                  }`}
+                  aria-current={currentPage === i + 1 ? "page" : undefined}
+                  aria-label={`Go to page ${i + 1}`}
+                >
+                  {i + 1}
+                </button>
+              )
+            )}
           </div>
         </>
       )}

@@ -2,30 +2,32 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "./ReceivingTable.module.css";
+import { useSession } from "next-auth/react";
 
 const ReceivingTable = ({ records = [] }) => {
-const [currentPage, setCurrentPage] = useState(1);
-const [searchTerm, setSearchTerm] = useState("");
-const [statusFilter, setStatusFilter] = useState("All");
-const [selectedRecord, setSelectedRecord] = useState(null);
-const [suppliers, setSuppliers] = useState([]);
-const [materials, setMaterials] = useState([]);
-const [poItems, setPoItems] = useState([]);
-const [allRecords, setAllRecords] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [suppliers, setSuppliers] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [poItems, setPoItems] = useState([]);
+  const [allRecords, setAllRecords] = useState([]);
+  const { data: session } = useSession();
 
-const fetchRecords = async () => {
-  try {
-    const res = await fetch("/api/receiving");
-    const data = await res.json();
-    setAllRecords(data);
-  } catch (error) {
-    console.error("Gagal fetch data PO:", error);
-  }
-};
+  const fetchRecords = async () => {
+    try {
+      const res = await fetch("/api/receiving");
+      const data = await res.json();
+      setAllRecords(data);
+    } catch (error) {
+      console.error("Gagal fetch data PO:", error);
+    }
+  };
 
-useEffect(() => {
-  fetchRecords();
-}, []);
+  useEffect(() => {
+    fetchRecords();
+  }, []);
 
   const recordsPerPage = 10;
 
@@ -68,16 +70,17 @@ useEffect(() => {
   }, [selectedRecord]);
 
   const filteredRecords = Array.isArray(allRecords)
-    ? allRecords.filter((r) =>
-        [r.po_ID, r.supplier_ID, r.material_ID].some((field) =>
-          (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+    ? allRecords
+        .filter((r) =>
+          [r.po_ID, r.supplier_ID, r.material_ID].some((field) =>
+            (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+          )
         )
-      )
-      .filter((r) =>
+        .filter((r) =>
           statusFilter === "All"
             ? true
             : r.status.toLowerCase() === statusFilter.toLowerCase()
-      )
+        )
     : [];
 
   const indexOfLast = currentPage * recordsPerPage;
@@ -152,15 +155,14 @@ useEffect(() => {
             <option value="Order">Order</option>
           </select>
         </div>
-    </div>
-
+      </div>
 
       {filteredRecords.length === 0 ? (
         <p>Tidak ada data Purchase Order.</p>
       ) : (
         <>
           <div className={styles.resultsSummary}>
-            {filteredRecords.length} records 
+            {filteredRecords.length} records
           </div>
 
           <table className={styles.table}>
@@ -202,8 +204,14 @@ useEffect(() => {
       )}
 
       {selectedRecord && (
-        <div className={styles.modalOverlay} onClick={() => setSelectedRecord(null)}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setSelectedRecord(null)}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3>Detail PO: {selectedRecord.po_ID}</h3>
             <p>Order Date: {selectedRecord.order_date}</p>
             <p>Supplier ID: {selectedRecord.supplier_ID}</p>
@@ -218,17 +226,22 @@ useEffect(() => {
               ) : (
                 poItems.map((item, idx) => (
                   <li key={idx}>
-                    {item.material_ID} - {getMaterialName(item.material_ID)} | Qty: {item.quantity}
+                    {item.material_ID} - {getMaterialName(item.material_ID)} |
+                    Qty: {item.quantity}
                   </li>
                 ))
               )}
             </ul>
 
-            {selectedRecord.status !== "Received" && (
-              <button onClick={handleReceive} className={styles.receiveButton}>
-                Receive
-              </button>
-            )}
+            {selectedRecord.status !== "Received" &&
+              session?.user?.department === "logistics" && (
+                <button
+                  onClick={handleReceive}
+                  className={styles.receiveButton}
+                >
+                  Receive
+                </button>
+              )}
 
             <button
               onClick={() => setSelectedRecord(null)}

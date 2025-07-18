@@ -14,7 +14,9 @@ const PurchaseOrderDetailModal = ({ record, onClose }) => {
         // Fetch supplier
         const supRes = await fetch("/api/supplier");
         const supData = await supRes.json();
-        const supplier = supData.find((s) => s.supplier_ID === record.supplier_ID);
+        const supplier = supData.find(
+          (s) => s.supplier_ID === record.supplier_ID
+        );
         setSupplierName(supplier ? supplier.supplier : "-");
 
         // Fetch all materials
@@ -41,7 +43,9 @@ const PurchaseOrderDetailModal = ({ record, onClose }) => {
 
   // Hitung grand total cost
   const grandTotalCost = poItems.reduce((acc, item) => {
-    const material = materialsList.find((m) => m.material_ID === item.material_ID);
+    const material = materialsList.find(
+      (m) => m.material_ID === item.material_ID
+    );
     const cost = material ? material.cost : 0;
     return acc + cost * item.quantity;
   }, 0);
@@ -50,25 +54,35 @@ const PurchaseOrderDetailModal = ({ record, onClose }) => {
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <h2>Detail Purchase Order</h2>
-        <p><strong>PO ID:</strong> {record.po_ID}</p>
-        <p><strong>Order Date:</strong> {new Date(record.order_date).toLocaleDateString()}</p>
-        <p><strong>Supplier:</strong> {supplierName}</p>
-        <p><strong>Status:</strong> {record.status}</p>
+        <p>
+          <strong>PO ID:</strong> {record.po_ID}
+        </p>
+        <p>
+          <strong>Order Date:</strong>{" "}
+          {new Date(record.order_date).toLocaleDateString()}
+        </p>
+        <p>
+          <strong>Supplier:</strong> {supplierName}
+        </p>
+        <p>
+          <strong>Status:</strong> {record.status}
+        </p>
 
         <h3>Items:</h3>
         {poItems.length === 0 && <p>Tidak ada item.</p>}
         <ul>
           {poItems.map((item) => {
-            const material = materialsList.find(m => m.material_ID === item.material_ID);
+            const material = materialsList.find(
+              (m) => m.material_ID === item.material_ID
+            );
             const cost = material ? material.cost : 0;
             const totalCost = cost * item.quantity;
 
             return (
               <li key={item.order_items_ID}>
-                {material ? material.material : item.material_ID} — 
-                Quantity: {item.quantity}, 
-                Cost: Rp{cost.toLocaleString()}, 
-                Total: Rp{totalCost.toLocaleString()}
+                {material ? material.material : item.material_ID} — Quantity:{" "}
+                {item.quantity}, Cost: Rp{cost.toLocaleString()}, Total: Rp
+                {totalCost.toLocaleString()}
               </li>
             );
           })}
@@ -77,7 +91,9 @@ const PurchaseOrderDetailModal = ({ record, onClose }) => {
         <h4>Grand Total Cost: Rp{grandTotalCost.toLocaleString()}</h4>
 
         <div className={styles.modalActions}>
-          <button onClick={onClose} className={styles.closeButton}>Close</button>
+          <button onClick={onClose} className={styles.closeButton}>
+            Close
+          </button>
         </div>
       </div>
     </div>

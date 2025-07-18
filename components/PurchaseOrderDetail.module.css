@@ -20,7 +20,7 @@
   min-width: 320px;
   max-width: 520px;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: #222;
   transition: transform 0.3s ease, opacity 0.3s ease;
   transform: translateY(0);

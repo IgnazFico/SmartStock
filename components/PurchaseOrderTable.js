@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import styles from "./PurchaseOrderTable.module.css";
 import PurchaseOrderDetail from "./PurchaseOrderDetail";
+import { useSession } from "next-auth/react";
 
 const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -10,6 +11,7 @@ const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const recordsPerPage = 10;
+  const { data: session } = useSession();
 
   const filteredRecords = Array.isArray(records)
     ? records.filter((r) =>
@@ -43,9 +45,12 @@ const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
           }}
           className={styles.searchInput}
         />
-        <button className={styles.newPOButton} onClick={onAddNewPO}>
-          + New PO
-        </button>
+        {(session?.user?.department === "purchasing" ||
+          session?.user?.role === "admin") && (
+          <button className={styles.newPOButton} onClick={onAddNewPO}>
+            + New PO
+          </button>
+        )}
       </div>
 
       {filteredRecords.length === 0 ? (
@@ -68,7 +73,11 @@ const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
             </thead>
             <tbody>
               {currentRecords.map((r, i) => (
-                <tr key={i} onClick={() => handleRowClick(r)} style={{ cursor: 'pointer' }}>
+                <tr
+                  key={i}
+                  onClick={() => handleRowClick(r)}
+                  style={{ cursor: "pointer" }}
+                >
                   <td>{r.po_ID}</td>
                   <td>{r.order_date}</td>
                   <td>{r.supplier_ID}</td>
@@ -79,15 +88,18 @@ const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
           </table>
 
           <div className={styles.container}>
-            {Array.from({ length: Math.ceil(filteredRecords.length / recordsPerPage) }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => paginate(i + 1)}
-                className={styles.pageButton}
-              >
-                {i + 1}
-              </button>
-            ))}
+            {Array.from(
+              { length: Math.ceil(filteredRecords.length / recordsPerPage) },
+              (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => paginate(i + 1)}
+                  className={styles.pageButton}
+                >
+                  {i + 1}
+                </button>
+              )
+            )}
           </div>
         </>
       )}
