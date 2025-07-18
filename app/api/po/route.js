@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import connect from "../../../utils/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET() {
   try {
@@ -30,6 +32,19 @@ export async function GET() {
 
 export async function POST(req) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (
+      !session ||
+      (session.user.department !== "purchasing" &&
+        session.user.role !== "admin")
+    ) {
+      return NextResponse.json(
+        { message: "Unauthorized. Access restricted to purchasing or admin." },
+        { status: 403 }
+      );
+    }
+
     const db = await connect();
     const poCollection = db.collection("purchase_orders");
     const poItemsCollection = db.collection("purchase_orders_items");
@@ -52,8 +67,13 @@ export async function POST(req) {
     }
 
     // Generate PO ID otomatis
-    const lastPO = await poCollection.find().sort({ po_ID: -1 }).limit(1).toArray();
-    const newNumber = lastPO.length > 0 ? parseInt(lastPO[0].po_ID.slice(2)) + 1 : 1;
+    const lastPO = await poCollection
+      .find()
+      .sort({ po_ID: -1 })
+      .limit(1)
+      .toArray();
+    const newNumber =
+      lastPO.length > 0 ? parseInt(lastPO[0].po_ID.slice(2)) + 1 : 1;
     const newPO_ID = `PO${newNumber.toString().padStart(4, "0")}`;
 
     // Simpan header PO

@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
 import connect from "@/utils/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.position !== "supervisor") {
+      return NextResponse.json(
+        { error: "Unauthorized. Only supervisors can approve or reject." },
+        { status: 403 }
+      );
+    }
+
     const data = await req.json();
     const db = await connect();
 
-    const {
-      pr_ID,
-      users_ID,
-      approval_status,
-      approval_date,
-      remarks,
-    } = data;
+    const { pr_ID, users_ID, approval_status, approval_date, remarks } = data;
 
     if (!pr_ID || !approval_status || !users_ID) {
       return NextResponse.json(
@@ -83,10 +88,9 @@ export async function POST(req) {
     const updateFields = { status: statusLower };
     if (statusLower === "rejected") updateFields.remarks = remarks || "";
 
-    const updateResult = await db.collection("purchase_requests").updateOne(
-      { pr_ID },
-      { $set: updateFields }
-    );
+    const updateResult = await db
+      .collection("purchase_requests")
+      .updateOne({ pr_ID }, { $set: updateFields });
 
     if (updateResult.modifiedCount === 0) {
       return NextResponse.json(

@@ -1,8 +1,22 @@
 import { NextResponse } from "next/server";
 import connect from "../../../../utils/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.department !== "purchasing") {
+      return NextResponse.json(
+        {
+          error:
+            "Unauthorized. Only purchasing department can perform this action.",
+        },
+        { status: 403 }
+      );
+    }
+
     const poArray = await req.json();
 
     if (!Array.isArray(poArray) || poArray.length === 0) {
@@ -17,14 +31,22 @@ export async function POST(req) {
     const poItemCollection = db.collection("purchase_orders_items");
 
     // Ambil last po_ID dari DB untuk generate ID baru
-    const lastPO = await poCollection.find().sort({ po_ID: -1 }).limit(1).toArray();
+    const lastPO = await poCollection
+      .find()
+      .sort({ po_ID: -1 })
+      .limit(1)
+      .toArray();
     let lastPoNumber = 0;
     if (lastPO.length > 0) {
       lastPoNumber = parseInt(lastPO[0].po_ID.slice(2));
     }
 
     // Ambil last order_items_ID untuk generate unik
-    const lastItem = await poItemCollection.find().sort({ order_items_ID: -1 }).limit(1).toArray();
+    const lastItem = await poItemCollection
+      .find()
+      .sort({ order_items_ID: -1 })
+      .limit(1)
+      .toArray();
     let lastItemNumber = 0;
     if (lastItem.length > 0) {
       // Misal format OI0001, ambil angka setelah 'OI'
@@ -37,9 +59,12 @@ export async function POST(req) {
     for (const po of poArray) {
       // Validasi PO utama
       if (
-        !po.supplier_ID || typeof po.supplier_ID !== "string" ||
-        !po.order_date || isNaN(Date.parse(po.order_date)) ||
-        !Array.isArray(po.items) || po.items.length === 0
+        !po.supplier_ID ||
+        typeof po.supplier_ID !== "string" ||
+        !po.order_date ||
+        isNaN(Date.parse(po.order_date)) ||
+        !Array.isArray(po.items) ||
+        po.items.length === 0
       ) {
         return NextResponse.json(
           { error: "Data PO tidak lengkap atau salah format" },
@@ -50,8 +75,10 @@ export async function POST(req) {
       // Validasi tiap item
       for (const item of po.items) {
         if (
-          !item.material_ID || typeof item.material_ID !== "string" ||
-          typeof item.quantity !== "number" || item.quantity < 1
+          !item.material_ID ||
+          typeof item.material_ID !== "string" ||
+          typeof item.quantity !== "number" ||
+          item.quantity < 1
         ) {
           return NextResponse.json(
             { error: "Data item PO tidak lengkap atau salah format" },
@@ -82,7 +109,9 @@ export async function POST(req) {
       // Detail Items dengan order_items_ID unik
       for (const item of po.items) {
         lastItemNumber++;
-        const newOrderItemID = `OI${lastItemNumber.toString().padStart(4, "0")}`;
+        const newOrderItemID = `OI${lastItemNumber
+          .toString()
+          .padStart(4, "0")}`;
 
         poItemsToInsert.push({
           order_items_ID: newOrderItemID,

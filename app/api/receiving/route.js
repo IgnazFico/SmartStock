@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import connect from "../../../utils/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET() {
   try {
@@ -32,10 +34,25 @@ export async function GET() {
 
 export async function PUT(request) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.department !== "logistics") {
+      return NextResponse.json(
+        {
+          message:
+            "Unauthorized. Only logistics department can update receiving status.",
+        },
+        { status: 403 }
+      );
+    }
+
     const { po_ID, received_date, status } = await request.json();
 
     if (!po_ID) {
-      return NextResponse.json({ message: "po_ID wajib diisi" }, { status: 400 });
+      return NextResponse.json(
+        { message: "po_ID wajib diisi" },
+        { status: 400 }
+      );
     }
 
     const db = await connect();
@@ -56,6 +73,9 @@ export async function PUT(request) {
     return NextResponse.json({ message: "Data berhasil diperbarui." });
   } catch (err) {
     console.error("🔥 API Error PUT /api/receiving:", err);
-    return NextResponse.json({ message: "Gagal memperbarui data." }, { status: 500 });
+    return NextResponse.json(
+      { message: "Gagal memperbarui data." },
+      { status: 500 }
+    );
   }
 }
