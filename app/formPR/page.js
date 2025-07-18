@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "./style.module.css";
+import { useSession } from "next-auth/react";
 
 export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
+  const { data: session } = useSession();
+
   const [formData, setFormData] = useState({
     users_ID: "",
     department: "",
@@ -12,24 +15,22 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
   });
 
   const [items, setItems] = useState([{ material_ID: "", quantity: "" }]);
-  const [departments, setDepartments] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Set users_ID dan department dari session
   useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const res = await fetch("/api/users/departments");
-        const data = await res.json();
-        setDepartments(data || []);
-      } catch {
-        setDepartments([]);
-      }
-    };
-    fetchDepartments();
-  }, []);
+    if (session?.user) {
+      setFormData((prev) => ({
+        ...prev,
+        users_ID: session.user.users_ID || "",
+        department: session.user.department || "",
+      }));
+    }
+  }, [session]);
 
+  // Fetch daftar material dari API
   useEffect(() => {
     const fetchMaterials = async () => {
       try {
@@ -42,21 +43,6 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
     };
     fetchMaterials();
   }, []);
-
-  useEffect(() => {
-    if (!formData.department) return;
-    const fetchUserByDepartment = async () => {
-      try {
-        const res = await fetch(`/api/users/by-department?department=${formData.department}`);
-        const users = await res.json();
-        const userID = Array.isArray(users) && users.length > 0 ? users[0].users_ID : "";
-        setFormData((prev) => ({ ...prev, users_ID: userID }));
-      } catch {
-        setFormData((prev) => ({ ...prev, users_ID: "" }));
-      }
-    };
-    fetchUserByDepartment();
-  }, [formData.department]);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -85,7 +71,9 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
     setLoading(true);
     setError(null);
 
-    const isValid = items.every((item) => item.material_ID && item.quantity > 0);
+    const isValid = items.every(
+      (item) => item.material_ID && item.quantity > 0
+    );
     if (!isValid) {
       setError("Please fill in valid material and quantity for all items.");
       setLoading(false);
@@ -113,9 +101,8 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
       }
 
       const saved = await res.json();
-alert(`✅ Purchase Request successfully saved! PR ID: ${saved.pr_ID}`);
-onSubmitSuccess?.(saved);
-
+      alert(`✅ Purchase Request successfully saved! PR ID: ${saved.pr_ID}`);
+      onSubmitSuccess?.(saved);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -125,12 +112,12 @@ onSubmitSuccess?.(saved);
 
   return (
     <div className={styles.formWrapper}>
-  <div className={styles.formHeader}>
-    <h2 className={styles.title}>Form Purchase Request</h2>
-    <button onClick={onClose} className={styles.closeButton} type="button">
-      &times;
-    </button>
-  </div>
+      <div className={styles.formHeader}>
+        <h2 className={styles.title}>Form Purchase Request</h2>
+        <button onClick={onClose} className={styles.closeButton} type="button">
+          &times;
+        </button>
+      </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <label className={styles.formLabel}>
@@ -140,26 +127,19 @@ onSubmitSuccess?.(saved);
             className={styles.formInput}
             value={formData.users_ID}
             disabled
-            placeholder="Auto from department"
+            placeholder="Auto from login user"
           />
         </label>
 
         <label className={styles.formLabel}>
           Department:
-          <select
+          <input
             name="department"
             className={styles.formInput}
             value={formData.department}
-            onChange={handleFormChange}
-            required
-          >
-            <option value="">-- Select Department --</option>
-            {departments.map((dept) => (
-              <option key={dept} value={dept}>
-                {dept}
-              </option>
-            ))}
-          </select>
+            disabled
+            placeholder="Auto from login user"
+          />
         </label>
 
         <label className={styles.formLabel}>

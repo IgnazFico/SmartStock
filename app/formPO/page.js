@@ -74,7 +74,7 @@ export default function FormPurchaseOrder({ onSubmitSuccess, onClose }) {
       const res = await fetch("/api/po/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify([payload]), 
+        body: JSON.stringify([payload]),
       });
 
       if (!res.ok) {
