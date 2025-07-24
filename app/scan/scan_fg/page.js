@@ -150,7 +150,7 @@ export default function Scan() {
         Inventory_ID,
         part_number,
         quantity,
-        warehouse_Id,
+        //warehouse_Id,
         workerBarcodeFromQR,
         time_submitted
       ] = scannedData.split("|");

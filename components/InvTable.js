@@ -24,7 +24,6 @@ const InvTable = React.memo(({ records, handleRecordClick }) => {
             <th>Part Number</th>
             <th>Quantity</th>
             <th>Locator</th>
-            <th>Warehouse</th>
             <th>Time Submitted</th>
           </tr>
         </thead>
@@ -42,7 +41,7 @@ const InvTable = React.memo(({ records, handleRecordClick }) => {
               <td>{record.part_number}</td>
               <td>{record.quantity}</td>
               <td>{record.locator}</td>
-              <td>{record.warehouse_Id}</td>
+              
               <td>{record.time_submitted}</td>
             </tr>
           ))}

@@ -46,6 +46,15 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+            {session.user.role === "super" && (
+        <div className={styles.card}>
+          <h2>Super Admin Dashboard</h2>
+          <p>You have access to all system features and analytics.</p>
+          <div className={styles.chartWrapper}>
+            <StockLevelChart />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
