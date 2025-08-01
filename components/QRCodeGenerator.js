@@ -5,8 +5,12 @@ import QRCodeTemplate from "./QRCodeTemplate";
 import QRCodeTemplateA4 from "./QRCodeTemplateA4";
 import { createRoot } from "react-dom/client";
 import styles from "./QRCodeGenerator.module.css";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const QRCodeGenerator = () => {
+  const { data: session, status } = useSession(); // 🟢 Harus di sini
+  const router = useRouter();
   const [workerBarcode, setWorkerBarcode] = useState("");
   const [isWorkerValid, setIsWorkerValid] = useState(false);
   const [Inventory_ID, setInventory_ID] = useState("");
@@ -20,7 +24,19 @@ const QRCodeGenerator = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
+   // ⛔ Blokir user yang tidak berasal dari Logistics atau tidak admin/super
+  useEffect(() => {
+    if (status === "loading") return;
 
+    const user = session?.user;
+    if (
+      !user ||
+      (!["logistics"].includes(user.department?.toLowerCase()) &&
+        !["admin", "super"].includes(user.role))
+    ) {
+      router.push("/unauthorized");
+    }
+  }, [session, status, router]);
   // Fetch Inventory_ID otomatis setelah worker valid
   useEffect(() => {
     const fetchInventoryId = async () => {
@@ -353,7 +369,7 @@ const QRCodeGenerator = () => {
         <label className={styles.label}>Production Order:</label>
         <Select
           options={prodOptionsMapped}
-          placeholder="Pilih Production Order"
+          placeholder="SELECT PRODUCTION ORDER"
           isDisabled={!isWorkerValid}
           value={prodOptionsMapped.find(opt => opt.value === prodOrderId)}
           onChange={(selected) => {

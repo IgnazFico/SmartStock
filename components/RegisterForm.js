@@ -7,14 +7,14 @@ const RegisterForm = () => {
   const { data: session } = useSession();
   const [formData, setFormData] = useState({
     name: "",
-    department: "logistics",
+    department: "",
     position: "",
     NIK: "",
     barcode: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "user",
+    role: "",
   });
 
   const [error, setError] = useState("");
@@ -156,6 +156,7 @@ const RegisterForm = () => {
               <option value="supervisor">Supervisor</option>
               <option value="staff">Staff</option>
               <option value="leader">Leader</option>
+              
             </select>
           </div>
 

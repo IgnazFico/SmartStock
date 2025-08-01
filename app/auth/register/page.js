@@ -1,28 +1,34 @@
-"use client"; // This ensures it's a client-side component
+"use client";
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import RegisterForm from "../../../components/RegisterForm"; // Import the RegisterForm component
+import RegisterForm from "../../../components/RegisterForm";
 
 export default function Dashboard() {
-  const { data: session, status } = useSession(); // Fetch session and status using useSession
-  const loading = status === "loading"; // Check if the session is loading
-  const router = useRouter(); // For redirection
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  // If the session is loading, show a loading message
-  if (loading) {
+  if (status === "loading") {
     return <p>Loading...</p>;
   }
 
-  // If no session is found, redirect to login page
   if (!session) {
-    router.push("/auth"); // Redirect to the login page
-    return null; // Prevent rendering before redirect
+    router.push("/auth"); // redirect jika belum login
+    return null;
+  }
+
+  const userRole = session.user?.role;
+
+  // Redirect jika user bukan admin atau super
+  if (userRole !== "admin" && userRole !== "super") {
+    router.push("/unauthorized");
+    return null;
   }
 
   return (
-    (session.user.role === "admin" || session.user.role === "super") && (
+    <main style={{ padding: "20px" }}>
+      <h1>Register New User</h1>
       <RegisterForm />
-    )
+    </main>
   );
 }

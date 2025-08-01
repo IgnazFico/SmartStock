@@ -18,9 +18,23 @@ export default function Scan() {
 
   const { data: session, status } = useSession();
   const loading = status === "loading";
+  const router = useRouter();
   const barcodeInputRef = useRef(null);
   const locatorInputRef = useRef(null);
   const qrInputRef = useRef(null);
+
+ useEffect(() => {
+   if (status === "loading") return;
+
+  const user = session?.user;
+    if (
+      !user ||
+      (!["production"].includes(user.department?.toLowerCase()) &&
+        !["admin", "super"].includes(user.role))
+    ) {
+      router.push("/unauthorized");
+    }
+  }, [session, status, router]);
 
   useEffect(() => {
     if (barcodeInputRef.current && !loading) {
@@ -54,8 +68,6 @@ export default function Scan() {
   if (loading) {
     return <p>Loading...</p>;
   }
-
-  const router = useRouter();
 
   if (!session) {
     router.push("/auth");
