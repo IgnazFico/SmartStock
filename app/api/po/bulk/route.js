@@ -7,7 +7,12 @@ export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.department !== "purchasing") {
+    console.log("=== [DEBUG PO BULK API] Session data ===");
+    console.log("User from session:", session?.user);
+    console.log("Position:", session?.user?.position);
+    console.log("Department:", session?.user?.department);
+
+    if (!session || session.user.department?.toLowerCase() !== "purchasing") {
       return NextResponse.json(
         {
           error:
@@ -49,12 +54,12 @@ export async function POST(req) {
       .toArray();
     let lastItemNumber = 0;
     if (lastItem.length > 0) {
-      // Misal format OI0001, ambil angka setelah 'OI'
       lastItemNumber = parseInt(lastItem[0].order_items_ID.slice(2));
     }
 
     const posToInsert = [];
     const poItemsToInsert = [];
+    const createdPOIDs = []; // simpan semua PO ID baru
 
     for (const po of poArray) {
       // Validasi PO utama
@@ -67,7 +72,7 @@ export async function POST(req) {
         po.items.length === 0
       ) {
         return NextResponse.json(
-          { error: "Data PO tidak lengkap atau salah format" },
+          { error: "PO item data is incomplete or incorrectly formatted" },
           { status: 400 }
         );
       }
@@ -81,7 +86,7 @@ export async function POST(req) {
           item.quantity < 1
         ) {
           return NextResponse.json(
-            { error: "Data item PO tidak lengkap atau salah format" },
+            { error: "PO item data is incomplete or incorrectly formatted" },
             { status: 400 }
           );
         }
@@ -90,21 +95,25 @@ export async function POST(req) {
       // Generate po_ID baru
       lastPoNumber++;
       const newPoID = `PO${lastPoNumber.toString().padStart(4, "0")}`;
+      createdPOIDs.push(newPoID); // simpan ID yang dibuat
 
       // Header PO
       posToInsert.push({
         po_ID: newPoID,
         order_date: new Date(po.order_date),
         supplier_ID: po.supplier_ID,
-        status: po.status || "pending",
+        status: po.status || "Pending", // default Pending
         received_date: po.received_date ? new Date(po.received_date) : null,
       });
-      // Update status PR jadi converted
-      const prCollection = db.collection("purchase_requests");
-      await prCollection.updateOne(
-        { pr_ID: po.pr_ID },
-        { $set: { status: "converted" } }
-      );
+
+      // Update status PR jadi converted (jika ada pr_ID)
+      if (po.pr_ID) {
+        const prCollection = db.collection("purchase_requests");
+        await prCollection.updateOne(
+          { pr_ID: po.pr_ID },
+          { $set: { status: "Converted" } }
+        );
+      }
 
       // Detail Items dengan order_items_ID unik
       for (const item of po.items) {
@@ -128,7 +137,11 @@ export async function POST(req) {
 
     return NextResponse.json(
       {
-        message: `Succesfully insert  PO and ${insertItemResult.insertedCount} item.`,
+        message: `Successfully inserted ${
+          createdPOIDs.length
+        } PO(s): ${createdPOIDs.join(", ")} with total ${
+          insertItemResult.insertedCount
+        } items.`,
       },
       { status: 201 }
     );
