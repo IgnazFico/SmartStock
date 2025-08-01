@@ -37,13 +37,57 @@ export default function ProductionOrders() {
     router.push("/production-orders/create");
   };
 
+  const exportToCSV = () => {
+    if (!orders.length) return;
+
+    const headers = [
+      "Order ID",
+      "Item ID",
+      "Quantity",
+      "Order Date",
+      "Due Date",
+      "Status",
+    ];
+    const rows = orders.map((order) => [
+      order.prod_order_id,
+      order.item_id,
+      order.quantity,
+      new Date(order.order_date).toLocaleDateString(),
+      new Date(order.due_date).toLocaleDateString(),
+      order.status,
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "production_orders.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Production Orders</h1>
-        <button onClick={handleCreate} className={styles.createButton}>
-          + Create New Order
-        </button>
+        <div>
+          <button onClick={handleCreate} className={styles.createButton}>
+            + Create New Order
+          </button>
+          <button
+            onClick={exportToCSV}
+            className={styles.createButton}
+            style={{ marginLeft: "10px" }}
+          >
+            ⬇ Export to CSV
+          </button>
+        </div>
       </div>
 
       {loading ? (
