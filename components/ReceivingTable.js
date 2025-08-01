@@ -17,7 +17,7 @@ const ReceivingTable = ({ records = [] }) => {
 
   const fetchRecords = async () => {
     try {
-      const res = await fetch("/api/receiving");
+      const res = await fetch("/api/receiving"); 
       const data = await res.json();
       setAllRecords(data);
     } catch (error) {

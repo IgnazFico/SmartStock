@@ -31,8 +31,6 @@ const WIPInventoryTable = React.memo(({ records, handleRecordClick }) => {
         <tbody>
           {currentRecords.map((record, index) => (
             <tr
-              key={record.wlp_ID}
-              onClick={() => handleRecordClick(record)}
               style={{
                 backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
                 cursor: "pointer",

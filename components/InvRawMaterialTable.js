@@ -36,7 +36,7 @@ const InvRawMaterialTable = React.memo(({ records, handleRecordClick }) => {
           {currentRecords.map((record, index) => (
             <tr
               key={record._id || record.rm_ID || index}
-              onClick={() => handleRecordClick && handleRecordClick(record)}
+              
               style={{
                 backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
                 cursor: "pointer",

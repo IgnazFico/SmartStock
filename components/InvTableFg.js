@@ -33,7 +33,6 @@ const InvTable = React.memo(({ records, handleRecordClick }) => {
           {currentRecords.map((record, index) => (
             <tr
               key={index}
-              onClick={() => handleRecordClick(record)}
               style={{
                 backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
                 cursor: "pointer",

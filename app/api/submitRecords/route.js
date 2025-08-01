@@ -77,7 +77,6 @@ export async function POST(req) {
 
            const duplicate = await db.collection("inv_finish_good").findOne({
                 Inventory_ID,
-                // Jika ingin benar-benar unik, hapus filter locator/prod_order_id
               });
               if (duplicate) {
                 return NextResponse.json(

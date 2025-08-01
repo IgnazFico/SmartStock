@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { debounce } from "lodash";
+import Select from "react-select";
 import QRCodeTemplate from "./QRCodeTemplatePrd";
 import QRCodeTemplateA4 from "./QRCodeTemplateA4Prd";
 import { createRoot } from "react-dom/client";
@@ -17,8 +18,8 @@ const QRCodeGenerator = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
+  const [prodOptions, setProdOptions] = useState([]);
 
-  // Fetch WipId otomatis setelah worker valid
   useEffect(() => {
     if (isWorkerValid) {
       fetch("/api/generateWipId")
@@ -30,7 +31,23 @@ const QRCodeGenerator = () => {
     }
   }, [isWorkerValid]);
 
-  // Validate worker barcode
+  // Fetch Production Order list (only unused)
+  useEffect(() => {
+    if (isWorkerValid) {
+      fetch("/api/barcode/available-prod-orders")
+        .then((res) => res.json())
+        .then((data) => setProdOptions(data))
+        .catch(() => setProdOptions([]));
+    }
+  }, [isWorkerValid]);
+
+  const prodOptionsMapped = prodOptions.map((item) => ({
+    value: item.prod_order_id,
+    label: item.prod_order_id,
+    partNumber: item.material_ID,
+    quantity: item.quantity
+  }));
+
   const validateWorkerBarcode = useCallback(
     debounce(async (barcode) => {
       try {
@@ -41,14 +58,10 @@ const QRCodeGenerator = () => {
         });
         const data = await response.json();
         setIsWorkerValid(data.valid);
-
-        if (!data.valid) {
-          setError("Invalid worker barcode. Please enter a valid barcode.");
-        } else {
-          setError("");
-        }
+        if (!data.valid) setError("Invalid worker barcode.");
+        else setError("");
       } catch (error) {
-        setError("An error occurred during validation.");
+        setError("Validation error.");
       }
     }, 300),
     []
@@ -57,38 +70,21 @@ const QRCodeGenerator = () => {
   const handleWorkerBarcodeChange = (e) => {
     const barcode = e.target.value;
     setWorkerBarcode(barcode);
-
-    if (barcode.length > 0) {
-      validateWorkerBarcode(barcode);
-    } else {
+    if (barcode.length > 0) validateWorkerBarcode(barcode);
+    else {
       setIsWorkerValid(false);
       setError("");
     }
   };
 
-  // Tidak perlu handleWipIdChange, field readonly
-  const handleProdOrderIdChange = (e) => setProdOrderId(e.target.value);
-
-  // Generate unique ID for each QR
-  const generateUniqueId = () => {
-    const timestamp = Date.now();
-    const randomNum = Math.floor(Math.random() * 10000);
-    return `${timestamp}${randomNum}`;
-  };
-
-  // Autocomplete for part number
   const fetchSuggestions = useCallback(
     debounce(async (inputValue) => {
       try {
-        const response = await fetch(
-          `/api/items?partNumber=${encodeURIComponent(inputValue)}`
-        );
+        const response = await fetch(`/api/items?partNumber=${encodeURIComponent(inputValue)}`);
         const data = await response.json();
         setSuggestions(data);
         setIsSuggestionsVisible(true);
-      } catch (error) {
-        // ignore
-      }
+      } catch (_) {}
     }, 500),
     []
   );
@@ -96,21 +92,15 @@ const QRCodeGenerator = () => {
   const handlePartNumberChange = (e) => {
     const inputValue = e.target.value;
     setPartNumber(inputValue);
-
-    if (inputValue.length > 2) {
-      fetchSuggestions(inputValue);
-    } else {
-      setSuggestions([]);
-    }
+    if (inputValue.length > 2) fetchSuggestions(inputValue);
+    else setSuggestions([]);
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "ArrowDown") {
-      setActiveSuggestionIndex((prev) =>
-        prev < suggestions.length - 1 ? prev + 1 : prev
-      );
+      setActiveSuggestionIndex((prev) => Math.min(prev + 1, suggestions.length - 1));
     } else if (e.key === "ArrowUp") {
-      setActiveSuggestionIndex((prev) => (prev > 0 ? prev - 1 : prev));
+      setActiveSuggestionIndex((prev) => Math.max(prev - 1, 0));
     } else if (e.key === "Enter" && activeSuggestionIndex >= 0) {
       selectSuggestion(activeSuggestionIndex);
     }
@@ -127,24 +117,15 @@ const QRCodeGenerator = () => {
     if (!text || !match) return text;
     const regex = new RegExp(`(${match})`, "i");
     const parts = text.split(regex);
-    return parts.map((part, index) =>
-      regex.test(part) ? (
-        <span key={index} className={styles.match}>
-          {part}
-        </span>
-      ) : (
-        part
-      )
+    return parts.map((part, i) =>
+      regex.test(part) ? <span key={i} 
+      className={styles.match}>{part}</span> : part
     );
   };
 
   const validateInputs = () => {
-    if (isNaN(quantity) || quantity <= 0) {
-      setError("Quantity must be a positive number.");
-      return false;
-    }
-    if (isNaN(copy) || copy <= 0) {
-      setError("Copy must be a positive number.");
+    if (quantity <= 0 || copy <= 0) {
+      setError("Quantity and Copy must be positive numbers.");
       return false;
     }
     setError("");
@@ -152,71 +133,49 @@ const QRCodeGenerator = () => {
   };
 
   const canPrint = () => {
-    return (
-      isWorkerValid &&
-      (WipId?.trim() || "") !== "" &&
-      (prodOrderId?.trim() || "") !== "" &&
-      (partNumber?.trim() || "") !== "" &&
-      quantity > 0 &&
-      copy > 0
-    );
+    return isWorkerValid && WipId && prodOrderId && partNumber && quantity > 0 && copy > 0;
   };
+
+  const generateUniqueId = () => `${Date.now()}${Math.floor(Math.random() * 10000)}`;
 
   const handlePrint = () => {
     if (!validateInputs()) return;
 
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=80mm, initial-scale=1.0" />
-        <title>Print QR Codes</title>
-        <style>
-        html { width: 80mm; height: 80mm; }
-        body {
-          width: 80mm;
-          height: 80mm;
-          margin: 0;
-          padding: 0;
-          font-family: Arial, sans-serif;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        #print-root { width: 100%; height: 100%; }
-        </style>
-      </head>
-      <body>
-        <div id="print-root"></div>
-      </body>
-      </html>
+      <html><head><title>Print</title><style>
+        html, body { width: 80mm; height: 80mm; margin: 0; padding: 0; }
+        #print-root { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; }
+      </style></head><body><div id="print-root"></div></body></html>
     `);
     printWindow.document.close();
 
-    const printRoot = printWindow.document.getElementById("print-root");
-    const root = createRoot(printRoot);
-
-    const templates = [];
-    for (let i = 0; i < copy; i++) {
-      const uniqueId = generateUniqueId();
-      templates.push(
-        <QRCodeTemplate
-          key={i}
-          wipId={WipId}
-          poNumber={prodOrderId}
-          partNumber={partNumber}
-          quantity={quantity}
-          uniqueId={uniqueId}
-          workerBarcode={workerBarcode}
-        />
-      );
-    }
+    const root = createRoot(printWindow.document.getElementById("print-root"));
+    const templates = Array.from({ length: copy }, (_, i) => (
+      <QRCodeTemplate 
+        key={i} 
+        wipId={WipId} 
+        poNumber={prodOrderId} 
+        partNumber={partNumber} 
+        quantity={quantity} 
+        uniqueId={generateUniqueId()} 
+        workerBarcode={workerBarcode} />
+    ));
 
     root.render(<>{templates}</>);
     printWindow.focus();
     printWindow.print();
+
+    // ✅ Track production order usage
+    fetch("/api/barcode/track-used", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prod_order_id: prodOrderId,
+        type: "production",
+        used_at: new Date()
+      }),
+    });
   };
 
   const handlePrintA4 = () => {
@@ -224,121 +183,95 @@ const QRCodeGenerator = () => {
 
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=210mm, initial-scale=1.0" />
-        <title>Print QR Codes on A4</title>
-        <style>
+      <html><head><title>Print</title><style>
         @page { size: A4 landscape; margin: 1mm; }
         body {
-          width: 210mm;
-          height: 297mm;
-          margin: 0;
-          padding: 0mm;
-          font-family: Arial, sans-serif;
-          box-sizing: border-box;
+          width: 210mm; height: 297mm; margin: 0; padding: 0;
+          display: grid; grid-template-columns: repeat(6, 1fr);
+          grid-template-rows: repeat(4, 1fr); gap: 1mm;
         }
-        #print-root {
-          width: 100%;
-          height: 100%;
-          display: grid;
-          grid-template-columns: repeat(6, 1fr);
-          grid-template-rows: repeat(4, 1fr);
-          gap: 1mm;
-          page-break-inside: avoid;
-        }
-        </style>
-      </head>
-      <body>
-        <div id="print-root"></div>
-      </body>
-      </html>
+        #print-root { width: 100%; height: 100%; }
+      </style></head><body><div id="print-root"></div></body></html>
     `);
     printWindow.document.close();
 
-    const printRoot = printWindow.document.getElementById("print-root");
-    const root = createRoot(printRoot);
-
-    const templates = [];
-    for (let i = 0; i < copy; i++) {
-      const uniqueId = generateUniqueId();
-      templates.push(
-        <QRCodeTemplateA4
-          key={i}
-          wipId={WipId}
-          poNumber={prodOrderId}
-          partNumber={partNumber}
-          quantity={quantity}
-          uniqueId={uniqueId}
-          workerBarcode={workerBarcode}
-        />
-      );
-    }
+    const root = createRoot(printWindow.document.getElementById("print-root"));
+    const templates = Array.from({ length: copy }, (_, i) => (
+      <QRCodeTemplateA4 
+        key={i} 
+        wipId={WipId} 
+        poNumber={prodOrderId} 
+        partNumber={partNumber} 
+        quantity={quantity} 
+        uniqueId={generateUniqueId()} 
+        workerBarcode={workerBarcode} />
+    ));
 
     root.render(<>{templates}</>);
     printWindow.focus();
     printWindow.print();
+
+    // ✅ Track usage
+    fetch("/api/barcode/track-used", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prod_order_id: prodOrderId,
+        type: "production",
+        used_at: new Date()
+      }),
+    });
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.formGroup}>
         <label className={styles.label}>Worker Barcode:</label>
-        <input
-          type="text"
-          value={workerBarcode}
-          onChange={handleWorkerBarcodeChange}
-          className={styles.input}
-        />
+        <input 
+        type="text" 
+        value={workerBarcode} 
+        onChange={handleWorkerBarcodeChange} 
+        className={styles.input} />
       </div>
       <div className={styles.formGroup}>
-        <label className={styles.label}>Wip Id:</label>
-        <input
-          type="text"
-          value={WipId}
-          className={styles.input}
-          readOnly
-          disabled
-        />
+        <label className={styles.label}>WIP ID:</label>
+        <input 
+        type="text" 
+        value={WipId} 
+        className={styles.input} 
+        readOnly disabled />
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Production Order:</label>
-        <input
-          type="text"
-          value={prodOrderId}
-          onChange={handleProdOrderIdChange}
-          className={styles.input}
-          disabled={!isWorkerValid}
+        <Select
+          options={prodOptionsMapped}
+          placeholder="Pilih Production Order"
+          isDisabled={!isWorkerValid}
+          value={prodOptionsMapped.find(opt => opt.value === prodOrderId)}
+          onChange={(selected) => {
+            if (selected) {
+              setProdOrderId(selected.value);
+              setPartNumber(selected.partNumber || "");
+              setQuantity(Number(selected.quantity) || 1);
+            }
+          }}
         />
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Part Number:</label>
-        <input
-          type="text"
-          value={partNumber}
-          onChange={handlePartNumberChange}
-          onKeyDown={handleKeyDown}
-          className={styles.input}
-          disabled={!isWorkerValid}
-        />
+        <input 
+          type="text" 
+          value={partNumber} 
+          onChange={handlePartNumberChange} 
+          onKeyDown={handleKeyDown} 
+          className={styles.input} 
+          readonly disabled />
         {suggestions.length > 0 && isSuggestionsVisible && (
-          <ul className={styles.suggestionsList} role="listbox">
+          <ul className={styles.suggestionsList}>
             {suggestions.map((item, index) => (
-              <li
-                key={index}
-                role="option"
-                aria-selected={index === activeSuggestionIndex}
-                className={`${styles.suggestionItem} ${
-                  index === activeSuggestionIndex ? styles.active : ""
-                }`}
-                onClick={() => selectSuggestion(index)}
-              >
-                {highlightMatch(
-                  item.part_number || "Not Found",
-                  partNumber || ""
-                )}
+              <li key={index} onClick={() => selectSuggestion(index)} 
+              className={index === activeSuggestionIndex ? styles.active : ""}>
+                {highlightMatch(item.part_number || "", partNumber)}
               </li>
             ))}
           </ul>
@@ -346,42 +279,26 @@ const QRCodeGenerator = () => {
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Quantity:</label>
-        <input
-          type="number"
-          value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          min="1"
-          className={styles.input}
-          disabled={!isWorkerValid}
-        />
+          <input 
+            type="number" 
+            value={quantity} 
+            onChange={(e) => setQuantity(Number(e.target.value))} 
+            className={styles.input} min="1" 
+            readonly disabled />
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Copy:</label>
-        <input
-          type="number"
-          value={copy}
-          onChange={(e) => setCopy(Number(e.target.value))}
-          min="1"
-          className={styles.input}
-          disabled={!isWorkerValid}
-        />
+        <input 
+          type="number" 
+          value={copy} 
+          onChange={(e) => setCopy(Number(e.target.value))} 
+          className={styles.input} min="1" 
+          disabled={!isWorkerValid} />
       </div>
       {error && <p className={styles.error}>{error}</p>}
       <div className={styles.buttonGroup}>
-        <button
-          onClick={handlePrint}
-          className={styles.button}
-          disabled={!canPrint()}
-        >
-          Print QR Codes
-        </button>
-        <button
-          onClick={handlePrintA4}
-          className={styles.button}
-          disabled={!canPrint()}
-        >
-          Print on A4
-        </button>
+        <button onClick={handlePrint} className={styles.button} disabled={!canPrint()}>Print QR Codes</button>
+        <button onClick={handlePrintA4} className={styles.button} disabled={!canPrint()}>Print on A4</button>
       </div>
     </div>
   );

@@ -5,6 +5,8 @@ import { debounce } from "lodash";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./styles.module.css";
+import * as XLSX from "xlsx";
+
 
 const WIPTable = React.lazy(() => import("../../../components/WIPTable"));
 
@@ -93,6 +95,20 @@ const WIPInventoryPage = () => {
     (sum, record) => sum + Number(record.quantity),
     0
   );
+  const handleExportToExcel = async () => {
+  try {
+    const res = await fetch("/api/exportWipInventory");
+    const data = await res.json();
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "WIP Inventory");
+
+    XLSX.writeFile(wb, "wip_inventory.xlsx");
+  } catch (error) {
+    console.error("❌ Error exporting WIP:", error);
+  }
+};
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
@@ -126,99 +142,6 @@ const WIPInventoryPage = () => {
         backgroundColor: "#EDEDEDF0",
       }}>
       <h2 style={{ textAlign: "center", marginBottom: "20px", color: "#333" }}>WIP Inventory</h2>
-
-      {(role === "super" || role === "admin") && (
-        <div style={{ marginBottom: "20px" }}>
-          <button
-            className={styles.buttonAnimate}
-            onClick={() => setShowAddForm(true)}
-          >
-            ➕ WIP Inventory
-          </button>
-        </div>
-      )}
-
-      {showAddForm && (
-        <div className={styles.overlayForm}>
-          <div className={styles.formContainer}>
-            <h3>Add WIP Item</h3>
-            <form onSubmit={handleAddSubmit}>
-              <div className={styles.gridForm}>
-                <div>
-                  <label>WIP ID</label>
-                  <input type="text" value={newWip.wip_ID} disabled readOnly />
-                </div>
-                <div>
-                  <label>Warehouse ID</label>
-                  <input
-                    type="text"
-                    value={newWip.warehouse_ID}
-                    disabled
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label>prod_order_id</label>
-                  <input
-                    type="text"
-                    value={newWip.prod_order_id}
-                    onChange={(e) =>
-                      setNewWip((prev) => ({
-                        ...prev,
-                        prod_order_id: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label>Quantity</label>
-                  <input
-                    type="number"
-                    value={newWip.quantity}
-                    onChange={(e) =>
-                      setNewWip((prev) => ({
-                        ...prev,
-                        quantity: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label>Locator</label>
-                  <input
-                    type="text"
-                    value={newWip.locator}
-                    onChange={(e) =>
-                      setNewWip((prev) => ({
-                        ...prev,
-                        locator: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                  <div>
-                </div>
-              </div>
-              <div className={styles.formButtons}>
-                <button type="submit" className={styles.buttonAnimate}>
-                  Submit
-                </button>
-                <button
-                  type="button"
-                  className={styles.cancelButton}
-                  onClick={() => setShowAddForm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       <div className="flex justify-between items-center mb-4">
         <div>
           <input
@@ -233,6 +156,13 @@ const WIPInventoryPage = () => {
             onClick={() => handleSearchChange(searchTerm)}
           >
             Search
+          </button>
+          <button
+            className={styles.buttonAnimate}
+            onClick={handleExportToExcel}
+            style={{ padding: "10px", marginLeft: "8px" }}
+          >
+            Export to Excel
           </button>
         </div>
         <div style={{ textAlign: "right" }}>

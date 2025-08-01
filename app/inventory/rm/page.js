@@ -5,6 +5,7 @@ import { debounce } from "lodash";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./styles.module.css";
+import * as XLSX from "xlsx";
 
 const InvTable = React.lazy(() => import("../../../components/InvRawMaterialTable"));
 
@@ -49,6 +50,21 @@ const RawMaterialPage = () => {
 
     fetchRecords();
   }, []);
+  const handleExportFromServer = async () => {
+  try {
+    const response = await fetch("/api/exportInventoryRm");
+    const data = await response.json();
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Inventory RM");
+
+    XLSX.writeFile(wb, "inventoryRM_export.xlsx");
+  } catch (error) {
+    console.error("Export error:", error);
+  }
+};
+
 
   // Generate rm_ID & warehouse_ID tiap kali form dibuka
   useEffect(() => {
@@ -141,143 +157,16 @@ const RawMaterialPage = () => {
       }}
     >
       <h2 style={{ textAlign: "center", marginBottom: "20px", color: "#333" }}>
-        Raw Material Warehouse
+        Raw Material Inventory
       </h2>
 
-      {(role === "super" || role === "admin") && (
-        <div style={{ marginBottom: "20px" }}>
-          <button
-            className={styles.buttonAnimate}
-            onClick={() => setShowAddForm(true)}
-          >
-            + Raw Material
-          </button>
-        </div>
-      )}
-
-      {showAddForm && (
-        <div className={styles.overlayForm}>
-          <div className={styles.formContainer}>
-            <h3>Add Raw Material</h3>
-            <form onSubmit={handleAddSubmit}>
-              <div className={styles.gridForm}>
-                {/* rm_ID dan warehouse_ID disabled dan terisi otomatis */}
-                <div>
-                  <label>RM ID</label>
-                  <input
-                    type="text"
-                    name="rm_ID"
-                    value={newMaterial.rm_ID}
-                    disabled
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label>Warehouse ID</label>
-                  <input
-                    type="text"
-                    name="warehouse_ID"
-                    value={newMaterial.warehouse_ID}
-                    disabled
-                    readOnly
-                  />
-                </div>
-
-                {/* Input lain bisa diisi user */}
-                <div>
-                  <label>Part Number</label>
-                  <input
-                    type="text"
-                    name="part_number"
-                    value={newMaterial.part_number}
-                    onChange={(e) =>
-                      setNewMaterial((prev) => ({
-                        ...prev,
-                        part_number: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label>Quantity</label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    min="1"
-                    value={newMaterial.quantity}
-                    onChange={(e) =>
-                      setNewMaterial((prev) => ({
-                        ...prev,
-                        quantity: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label>Locator</label>
-                  <input
-                    type="text"
-                    name="locator"
-                    value={newMaterial.locator}
-                    onChange={(e) =>
-                      setNewMaterial((prev) => ({
-                        ...prev,
-                        locator: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label>PO ID</label>
-                  <input
-                    type="text"
-                    name="po_ID"
-                    value={newMaterial.po_ID}
-                    onChange={(e) =>
-                      setNewMaterial((prev) => ({
-                        ...prev,
-                        po_ID: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formButtons}>
-                <button type="submit" className={styles.buttonAnimate}>
-                  Submit
-                </button>
-                <button
-                  type="button"
-                  className={styles.cancelButton}
-                  onClick={() => setShowAddForm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "10px",
-        }}
-      >
+      <div className="flex justify-between items-center mb-4">
         <div>
           <input
             type="text"
             placeholder="Search by Part Number or Locator"
             value={searchTerm}
-            onChange={onSearchTermChange}
+            onChange={(e) => setSearchTerm(e.target.value)}
             style={{ padding: "10px", width: "300px" }}
           />
           <button
@@ -286,8 +175,14 @@ const RawMaterialPage = () => {
           >
             Search
           </button>
+           <button
+              className={styles.buttonAnimate}
+              onClick={handleExportFromServer}
+            >
+              Export to Excel
+          </button>
         </div>
-        <div>
+        <div style={{ textAlign: "right" }}>
           <h3>Results</h3>
           <p>
             {filteredRecords.length} records | Total Quantity: {totalQuantity}
