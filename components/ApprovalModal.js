@@ -71,7 +71,7 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
 
       if (!res.ok) {
         const errorData = await res.json();
-        alert(`Error: ${errorData.error || "Gagal mengirim approval"}`);
+        alert(`Error: ${errorData.error || "Fail sending approval"}`);
         setLoading(false);
         return;
       }
@@ -81,7 +81,7 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
       onClose();
     } catch (error) {
       console.error(error);
-      alert("Terjadi kesalahan saat menyimpan approval.");
+      alert("An error occurred while saving the approval.");
       setLoading(false);
     }
   };
@@ -108,7 +108,7 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
     }
 
     if (items.length === 0) {
-      alert("Tidak ada item untuk dibuat PO.");
+      alert("No items to create POs.");
       return;
     }
 
@@ -133,7 +133,7 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
             material_ID: i.material_ID,
             quantity: Number(i.quantity) || 0,
           })),
-          status: "order",
+          status: "Ordered",
           received_date: "",
         })
       );
@@ -152,12 +152,26 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
         return;
       }
 
-      alert("PO successfully created for all suppliers!");
+      // Ambil response dari API
+      const result = await res.json();
+      const { createdPOIDs, message } = result;
+
+      // Alert dinamis
+      if (createdPOIDs && createdPOIDs.length > 0) {
+        alert(
+          `PO successfully created: ${createdPOIDs.join(", ")} (${
+            createdPOIDs.length
+          } total)\n${message}`
+        );
+      } else {
+        alert(message || "PO successfully created for all suppliers!");
+      }
+
       await refreshData();
       onClose();
     } catch (error) {
       console.error(error);
-      alert("Terjadi kesalahan saat membuat PO.");
+      alert("An error occurred when creating the PO.");
     } finally {
       setLoading(false);
     }
@@ -165,7 +179,7 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
 
   if (!record) return null;
 
-  const isReadOnly = record.status.toLowerCase() !== "pending";
+  const isReadOnly = record.status !== "Pending";
 
   return (
     <div className={styles.modalOverlay}>
@@ -201,7 +215,7 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
               <div>
                 Material ID: {item.material_ID} | Quantity: {item.quantity}
               </div>
-              {record.status.toLowerCase() === "approved" && (
+              {record.status === "Approved" && (
                 <div>
                   <label>
                     <select
@@ -229,41 +243,42 @@ const ApprovalModal = ({ record, onClose, refreshData, detail }) => {
           ))}
         </ul>
 
-        {isReadOnly && record.status === "rejected" && (
+        {isReadOnly && record.status === "Rejected" && (
           <p>
             <strong>Remarks:</strong> {record.remarks}
           </p>
         )}
 
-        {!isReadOnly && session?.user?.position === "supervisor" && (
-          <>
-            <textarea
-              placeholder="Remarks"
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              className={styles.remarksInput}
-              disabled={loading}
-            />
-            <div className={styles.modalActions}>
-              <button
-                className={styles.approveButton}
-                onClick={() => handleApproval("approved")}
+        {!isReadOnly &&
+          session?.user?.position?.toLowerCase() === "supervisor" && (
+            <>
+              <textarea
+                placeholder="Remarks"
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                className={styles.remarksInput}
                 disabled={loading}
-              >
-                {loading ? "Processing..." : "approve"}
-              </button>
-              <button
-                className={styles.rejectButton}
-                onClick={() => handleApproval("rejected")}
-                disabled={loading}
-              >
-                {loading ? "Processing..." : "reject"}
-              </button>
-            </div>
-          </>
-        )}
+              />
+              <div className={styles.modalActions}>
+                <button
+                  className={styles.approveButton}
+                  onClick={() => handleApproval("Approved")}
+                  disabled={loading}
+                >
+                  {loading ? "Processing..." : "Approve"}
+                </button>
+                <button
+                  className={styles.rejectButton}
+                  onClick={() => handleApproval("Rejected")}
+                  disabled={loading}
+                >
+                  {loading ? "Processing..." : "Reject"}
+                </button>
+              </div>
+            </>
+          )}
 
-        {record.status.toLowerCase() === "approved" &&
+        {record.status === "Approved" &&
           session?.user?.department === "purchasing" && (
             <button
               className={styles.convertButton}
