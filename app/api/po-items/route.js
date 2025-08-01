@@ -36,21 +36,25 @@ export async function POST(req) {
     // validasi tiap item
     for (const item of itemsArray) {
       if (
-        !item.po_ID || typeof item.po_ID !== "string" ||
-        !item.material_ID || typeof item.material_ID !== "string" ||
-        typeof item.quantity !== "number" || item.quantity < 1
+        !item.po_ID ||
+        typeof item.po_ID !== "string" ||
+        !item.material_ID ||
+        typeof item.material_ID !== "string" ||
+        typeof item.quantity !== "number" ||
+        item.quantity < 1
       ) {
         return NextResponse.json(
-          { error: "Data PO Item tidak lengkap atau salah format" },
+          { error: "PO Item data is incomplete or incorrectly formatted" },
           { status: 400 }
         );
       }
     }
 
-    // tambahkan order_items_ID unik
-    const itemsToInsert = itemsArray.map(item => ({
+    // tambahkan order_items_ID unik & field received_qty default 0
+    const itemsToInsert = itemsArray.map((item) => ({
       ...item,
       order_items_ID: uuidv4(),
+      received_qty: 0,
     }));
 
     const db = await connect();
@@ -59,7 +63,7 @@ export async function POST(req) {
     const result = await collection.insertMany(itemsToInsert);
 
     return NextResponse.json(
-      { message: `Berhasil insert ${result.insertedCount} PO Items.` },
+      { message: `Succes insert ${result.insertedCount} PO Items.` },
       { status: 201 }
     );
   } catch (error) {
