@@ -3,6 +3,7 @@ import connect from "../../../utils/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
+// GET all purchase orders
 export async function GET() {
   try {
     const db = await connect();
@@ -30,6 +31,7 @@ export async function GET() {
   }
 }
 
+// POST create purchase order
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
@@ -48,7 +50,6 @@ export async function POST(req) {
     const db = await connect();
     const poCollection = db.collection("purchase_orders");
     const poItemsCollection = db.collection("purchase_orders_items");
-    const prCollection = db.collection("purchase_requests");
 
     const newPO = await req.json();
 
@@ -56,12 +57,11 @@ export async function POST(req) {
     if (
       !newPO.order_date ||
       !newPO.supplier_ID ||
-      !newPO.pr_ID ||
       !Array.isArray(newPO.items) ||
       newPO.items.length === 0
     ) {
       return NextResponse.json(
-        { message: "order_date, supplier_ID, pr_ID, dan items wajib diisi" },
+        { message: "order_date, supplier_ID, dan items required!" },
         { status: 400 }
       );
     }
@@ -76,12 +76,18 @@ export async function POST(req) {
       lastPO.length > 0 ? parseInt(lastPO[0].po_ID.slice(2)) + 1 : 1;
     const newPO_ID = `PO${newNumber.toString().padStart(4, "0")}`;
 
+    // Tentukan status otomatis
+    let poStatus = "Pending"; // default manual
+    if (newPO.pr_ID) {
+      poStatus = "Ordered"; // kalau ada pr_ID berarti convert dari PR
+    }
+
     // Simpan header PO
     const poToInsert = {
       po_ID: newPO_ID,
       order_date: new Date(newPO.order_date),
       supplier_ID: newPO.supplier_ID,
-      status: newPO.status || "pending",
+      status: poStatus,
       received_date: newPO.received_date || null,
     };
 
@@ -95,22 +101,54 @@ export async function POST(req) {
       po_ID: newPO_ID,
       material_ID: item.material_ID,
       quantity: Number(item.quantity),
-      request_item_ID: item.request_item_ID || null, // optional
+      request_item_ID: item.request_item_ID || null,
     }));
 
     const itemsResult = await poItemsCollection.insertMany(itemsToInsert);
     if (itemsResult.insertedCount !== itemsToInsert.length) {
-      console.warn("Tidak semua item PO berhasil disimpan.");
+      console.warn("Not all PO items are saved successfully.");
     }
 
     return NextResponse.json(
-      { message: "PO dan items berhasil disimpan", po_ID: newPO_ID },
+      { message: "PO and items saved successfully", po_ID: newPO_ID },
       { status: 201 }
     );
   } catch (err) {
     console.error("🔥 API Error POST /api/po:", err);
     return NextResponse.json(
       { message: "Gagal menyimpan data purchase order" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT update status PO (Approve / Reject / Cancel / Receive)
+export async function PUT(req) {
+  try {
+    const { po_ID, status } = await req.json();
+
+    const db = await connect();
+    const poCollection = db.collection("purchase_orders");
+
+    const result = await poCollection.updateOne(
+      { po_ID },
+      { $set: { status } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return NextResponse.json(
+        { message: "PO tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: `PO status successfully updated to ${status}`,
+    });
+  } catch (err) {
+    console.error("🔥 API Error PUT /api/po:", err);
+    return NextResponse.json(
+      { message: "Gagal update status PO" },
       { status: 500 }
     );
   }
