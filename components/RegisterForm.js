@@ -7,7 +7,7 @@ const RegisterForm = () => {
   const { data: session } = useSession();
   const [formData, setFormData] = useState({
     name: "",
-    department: "warehouse",
+    department: "logistics",
     position: "",
     NIK: "",
     barcode: "",
@@ -151,9 +151,11 @@ const RegisterForm = () => {
               onChange={handleChange}
               required
             >
-              <option value="Staff">Staff</option>
-              <option value="Supervisor">Supervisor</option>
-              <option value="Leader">Leader</option>
+              <option value="">-- Select Position --</option>
+              <option value="director">Director</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="staff">Staff</option>
+              <option value="leader">Leader</option>
             </select>
           </div>
 

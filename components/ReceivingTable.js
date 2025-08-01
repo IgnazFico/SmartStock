@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import styles from "./ReceivingTable.module.css";
 import { useSession } from "next-auth/react";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const ReceivingTable = ({ records = [] }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,9 +17,11 @@ const ReceivingTable = ({ records = [] }) => {
   const [allRecords, setAllRecords] = useState([]);
   const { data: session } = useSession();
 
+  const [receivedQuantities, setReceivedQuantities] = useState({});
+
   const fetchRecords = async () => {
     try {
-      const res = await fetch("/api/receiving"); 
+      const res = await fetch("/api/receiving");
       const data = await res.json();
       setAllRecords(data);
     } catch (error) {
@@ -61,6 +65,13 @@ const ReceivingTable = ({ records = [] }) => {
         if (!res.ok) throw new Error("Gagal ambil PO items");
         const data = await res.json();
         setPoItems(data);
+
+        // Reset inputan qty saat buka modal baru
+        const initialQuantities = {};
+        data.forEach((item) => {
+          initialQuantities[item.material_ID] = "";
+        });
+        setReceivedQuantities(initialQuantities);
       } catch (error) {
         console.error("Gagal fetch PO Items:", error);
         setPoItems([]);
@@ -89,31 +100,56 @@ const ReceivingTable = ({ records = [] }) => {
 
   const paginate = (page) => setCurrentPage(page);
 
+  const handleQtyChange = (material_ID, value) => {
+    setReceivedQuantities((prev) => ({
+      ...prev,
+      [material_ID]: Number(value),
+    }));
+  };
+
   const handleReceive = async () => {
     if (!selectedRecord) return;
-    const updatedData = {
+
+    // Validasi qty
+    for (const item of poItems) {
+      const inputQty = receivedQuantities[item.material_ID] || 0;
+      const maxQty = item.quantity - (item.received_qty || 0);
+
+      if (inputQty > maxQty) {
+        alert(
+          `Qty for ${item.material_ID} exceeds the remaining order. Maximum:${maxQty}`
+        );
+        return;
+      }
+    }
+
+    const itemsPayload = Object.entries(receivedQuantities)
+      .filter(([_, qty]) => qty > 0)
+      .map(([material_ID, qty]) => ({ material_ID, qty }));
+
+    if (itemsPayload.length === 0) {
+      alert("Fill in the number of items received first.");
+      return;
+    }
+
+    const payload = {
       po_ID: selectedRecord.po_ID,
-      received_date: new Date().toISOString().split("T")[0],
-      status: "Received",
+      received_date: new Date().toISOString(),
+      items: itemsPayload,
     };
 
-    try {
-      const response = await fetch(`/api/receiving`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedData),
-      });
+    const response = await fetch(`/api/receiving`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-      const result = await response.json();
-      alert(result.message);
+    const result = await response.json();
+    alert(result.message);
 
-      if (response.ok) {
-        setSelectedRecord({ ...selectedRecord, ...updatedData });
-        fetchRecords();
-      }
-    } catch (error) {
-      console.error("Gagal mengupdate data:", error);
-      alert("Gagal mengupdate data.");
+    if (response.ok) {
+      fetchRecords();
+      setSelectedRecord(null);
     }
   };
 
@@ -125,6 +161,81 @@ const ReceivingTable = ({ records = [] }) => {
   const getMaterialName = (material_ID) => {
     const material = materials.find((m) => m.material_ID === material_ID);
     return material ? material.material : "-";
+  };
+
+  /** EXPORT TO EXCEL FUNCTION */
+  const exportToExcel = async () => {
+    if (filteredRecords.length === 0) {
+      alert("No data for export");
+      return;
+    }
+
+    try {
+      // Ambil semua PO items
+      const itemsRes = await fetch("/api/po-items");
+      if (!itemsRes.ok) throw new Error("Gagal ambil PO Items");
+      const allItems = await itemsRes.json();
+
+      // Gabungkan Receiving dengan itemnya
+      const exportData = [];
+      for (const rec of filteredRecords) {
+        const relatedItems = allItems.filter(
+          (item) => item.po_ID === rec.po_ID
+        );
+
+        if (relatedItems.length > 0) {
+          relatedItems.forEach((item) => {
+            exportData.push({
+              "PO ID": rec.po_ID,
+              "Order Date": rec.order_date
+                ? new Date(rec.order_date).toISOString().split("T")[0]
+                : "",
+              "Received Date": rec.received_date
+                ? new Date(rec.received_date).toISOString().split("T")[0]
+                : "",
+              Status: rec.status,
+              Supplier: getSupplierName(rec.supplier_ID),
+              "Material ID": item.material_ID,
+              Material: getMaterialName(item.material_ID),
+              "Ordered Qty": item.quantity,
+              "Received Qty": item.received_qty || 0,
+            });
+          });
+        } else {
+          exportData.push({
+            "PO ID": rec.po_ID,
+            "Order Date": rec.order_date
+              ? new Date(rec.order_date).toISOString().split("T")[0]
+              : "",
+            "Received Date": rec.received_date
+              ? new Date(rec.received_date).toISOString().split("T")[0]
+              : "",
+            Status: rec.status,
+            Supplier: getSupplierName(rec.supplier_ID),
+            "Material ID": "-",
+            Material: "-",
+            "Ordered Qty": 0,
+            "Received Qty": 0,
+          });
+        }
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Receiving");
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+      const blob = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      saveAs(blob, `receiving_${Date.now()}.xlsx`);
+    } catch (error) {
+      console.error("Export to Excel gagal:", error);
+      alert("Fail export data Receiving");
+    }
   };
 
   return (
@@ -152,7 +263,8 @@ const ReceivingTable = ({ records = [] }) => {
           >
             <option value="All">All</option>
             <option value="Received">Received</option>
-            <option value="Order">Order</option>
+            <option value="Partially Received">Partially Received</option>
+            <option value="Ordered">Ordered</option>
           </select>
         </div>
       </div>
@@ -161,8 +273,13 @@ const ReceivingTable = ({ records = [] }) => {
         <p>Tidak ada data Purchase Order.</p>
       ) : (
         <>
-          <div className={styles.resultsSummary}>
-            {filteredRecords.length} records
+          <div className={styles.resultsBar}>
+            <div className={styles.resultsSummary}>
+              {filteredRecords.length} records
+            </div>
+            <button onClick={exportToExcel} className={styles.exportButton}>
+              Export to Excel
+            </button>
           </div>
 
           <table className={styles.table}>
@@ -213,28 +330,76 @@ const ReceivingTable = ({ records = [] }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <h3>Detail PO: {selectedRecord.po_ID}</h3>
-            <p>Order Date: {selectedRecord.order_date}</p>
-            <p>Supplier ID: {selectedRecord.supplier_ID}</p>
-            <p>Supplier: {getSupplierName(selectedRecord.supplier_ID)}</p>
-            <p>Status: {selectedRecord.status}</p>
-            <p>Received Date: {selectedRecord.received_date}</p>
+            <div className={styles.detailInfo}>
+              <p>
+                <strong>Order Date:</strong> {selectedRecord.order_date}
+              </p>
+              <p>
+                <strong>Supplier:</strong>{" "}
+                {getSupplierName(selectedRecord.supplier_ID)}
+              </p>
+              <p>
+                <strong>Status:</strong> {selectedRecord.status}
+              </p>
+              <p>
+                <strong>Received Date:</strong> {selectedRecord.received_date}
+              </p>
+            </div>
 
             <h4>Items:</h4>
-            <ul>
-              {poItems.length === 0 ? (
-                <li>Tidak ada item</li>
-              ) : (
-                poItems.map((item, idx) => (
-                  <li key={idx}>
-                    {item.material_ID} - {getMaterialName(item.material_ID)} |
-                    Qty: {item.quantity}
-                  </li>
-                ))
-              )}
-            </ul>
+            <table className={styles.itemsTable}>
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Ordered Qty</th>
+                  <th>Received Qty</th>
+                  {session?.user?.department === "logistics" && (
+                    <th>Input Qty</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {poItems.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={
+                        session?.user?.department === "logistics" ? 4 : 3
+                      }
+                    >
+                      Tidak ada item
+                    </td>
+                  </tr>
+                ) : (
+                  poItems.map((item, idx) => (
+                    <tr key={idx}>
+                      <td>
+                        {item.material_ID} - {getMaterialName(item.material_ID)}
+                      </td>
+                      <td>{item.quantity}</td>
+                      <td>{item.received_qty || 0}</td>
+                      {session?.user?.department === "logistics" && (
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            max={item.quantity - (item.received_qty || 0)}
+                            value={receivedQuantities[item.material_ID] || ""}
+                            onChange={(e) =>
+                              handleQtyChange(item.material_ID, e.target.value)
+                            }
+                            className={styles.qtyInput}
+                          />
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
 
-            {selectedRecord.status !== "Received" &&
-              session?.user?.department === "logistics" && (
+            {session?.user?.department === "logistics" &&
+              (selectedRecord.status === "Ordered" ||
+                selectedRecord.status === "Partially Received") && (
                 <button
                   onClick={handleReceive}
                   className={styles.receiveButton}
