@@ -21,13 +21,26 @@ const authOptions = {
     // Modify the JWT token to include role
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role; // Assign user role to the token
+        token.users_ID = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.role = user.role;
+        token.department = user.department;
+        token.position = user.position;
       }
+      console.log("=== [JWT CALLBACK] token ===", token);
       return token;
     },
     // Add the user role to the session object
     async session({ session, token }) {
-      session.user.role = token.role; // Pass the role into the session
+      session.user.name = token.name;
+      session.user.email = token.email;
+      session.user.role = token.role;
+      session.user.users_ID = token.users_ID;
+      session.user.department = token.department;
+      session.user.position = token.position;
+
+      console.log("=== [SESSION CALLBACK] session ===", session);
       return session;
     },
   },
@@ -48,7 +61,7 @@ const authOptions = {
         const client = await connect();
 
         // Find user by email
-        const usersCollection = client.collection("users");
+        const usersCollection = client.collection("user");
         const user = await usersCollection.findOne({ email });
 
         if (!user) {
@@ -63,10 +76,12 @@ const authOptions = {
 
         // Return user object, including the role from the database
         return {
-          id: user._id.toString(),
+          id: user.users_ID,
           name: user.name,
           email: user.email,
           role: user.role, // Extract role from the database
+          department: user.department,
+          position: user.position,
         };
       },
     }),
@@ -75,4 +90,4 @@ const authOptions = {
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+export { handler as GET, handler as POST, authOptions };
