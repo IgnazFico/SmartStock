@@ -10,7 +10,10 @@ export async function GET() {
     return NextResponse.json(prs, { status: 200 });
   } catch (error) {
     console.error("🔥 Gagal ambil data PR:", error);
-    return NextResponse.json({ message: "Gagal ambil data purchase requests" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Gagal ambil data purchase requests" },
+      { status: 500 }
+    );
   }
 }
 
@@ -23,16 +26,28 @@ export async function POST(req) {
 
     const newPR = await req.json();
 
-    if (!newPR.request_date || !newPR.department || !Array.isArray(newPR.items) || newPR.items.length === 0) {
-      return NextResponse.json({ message: "Data tidak lengkap (request_date, department, atau items kosong)" }, { status: 400 });
+    if (
+      !newPR.request_date ||
+      !newPR.department ||
+      !Array.isArray(newPR.items) ||
+      newPR.items.length === 0
+    ) {
+      return NextResponse.json(
+        {
+          message:
+            "Data not completed (request_date, department, atau items kosong)",
+        },
+        { status: 400 }
+      );
     }
 
     // Generate PR ID
     const allPRs = await prCollection.find({}).toArray();
-    const lastNumber = allPRs
-      .map((doc) => parseInt(doc.pr_ID?.slice(2) || "0"))
-      .filter((num) => !isNaN(num))
-      .sort((a, b) => b - a)[0] || 0;
+    const lastNumber =
+      allPRs
+        .map((doc) => parseInt(doc.pr_ID?.slice(2) || "0"))
+        .filter((num) => !isNaN(num))
+        .sort((a, b) => b - a)[0] || 0;
 
     const nextPRNumber = lastNumber + 1;
     const pr_ID = `PR${String(nextPRNumber).padStart(5, "0")}`;
@@ -44,8 +59,8 @@ export async function POST(req) {
       users_ID: newPR.users_ID || "",
       department: newPR.department,
       request_date: new Date(newPR.request_date).toISOString(),
-      priority: newPR.priority || "medium",
-      status: "pending",
+      priority: newPR.priority || "Medium",
+      status: "Pending",
     };
 
     const prResult = await prCollection.insertOne(prRecord);
@@ -73,9 +88,15 @@ export async function POST(req) {
 
     await approvalCollection.insertOne(approvalRecord);
 
-    return NextResponse.json({ pr_ID, itemCount: itemDocs.length }, { status: 201 });
+    return NextResponse.json(
+      { pr_ID, itemCount: itemDocs.length },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("🔥 Error saving PR:", err);
-    return NextResponse.json({ message: "Gagal menyimpan data purchase request" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Gagal menyimpan data purchase request" },
+      { status: 500 }
+    );
   }
 }
