@@ -5,6 +5,8 @@ import { debounce } from "lodash";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./styles.module.css";
+import * as XLSX from "xlsx";
+
 const InvTable = React.lazy(() => import("../../../components/InvTable"));
 
 const InventoryPage = () => {
@@ -29,6 +31,15 @@ const InventoryPage = () => {
 
     fetchRecords();
   }, []);
+  // export to excel
+  const handleExportToExcel = () => {
+  const worksheet = XLSX.utils.json_to_sheet(filteredRecords);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory FG");
+  XLSX.writeFile(workbook, "inventory_fg.xlsx");
+};
+
+
 
   const handleSearchChange = useCallback(
     debounce((term) => {
@@ -73,28 +84,22 @@ const InventoryPage = () => {
   // Tidak ada handleRecordClick dan state throw
 
   return (
-    <div
-      style={{
+    <div      
+    style={{
+        position: "relative",
         padding: "25px",
         borderRadius: "10px",
         boxShadow: "0 6px 14px rgba(0, 0, 0, 0.1)",
         backgroundColor: "#EDEDEDF0",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "10px",
-        }}
-      >
-        <div style={{ marginBottom: "20px" }}>
+      }}>
+      <h2 style={{ textAlign: "center", marginBottom: "20px", color: "#333" }}>Finish Goods Inventory</h2>
+      <div className="flex justify-between items-center mb-4">
+        <div>
           <input
             type="text"
-            placeholder="Search by Part or Locator"
+            placeholder="Search by Part Number or Locator"
             value={searchTerm}
-            onChange={onSearchTermChange}
+            onChange={(e) => setSearchTerm(e.target.value)}
             style={{ padding: "10px", width: "300px" }}
           />
           <button
@@ -103,9 +108,15 @@ const InventoryPage = () => {
           >
             Search
           </button>
+          <button
+            className={styles.buttonAnimate}
+            onClick={handleExportToExcel}
+            style={{ padding: "10px", marginLeft: "8px" }}
+          >
+            Export to Excel
+          </button>
         </div>
-
-        <div>
+        <div style={{ textAlign: "right" }}>
           <h3>Results</h3>
           <p>
             {filteredRecords.length} records | Total Quantity: {totalQuantity}
@@ -114,13 +125,11 @@ const InventoryPage = () => {
       </div>
 
       <Suspense fallback={<div>Loading table...</div>}>
-        <InvTable
-          records={filteredRecords}
-          handleRecordClick={() => {}}
-        />
+        <InvTable records={filteredRecords} />
       </Suspense>
     </div>
   );
 };
+
 
 export default InventoryPage;

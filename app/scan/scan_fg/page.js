@@ -11,6 +11,7 @@ export default function Scan() {
   const [isWorkerValid, setIsWorkerValid] = useState(false);
   const [error, setError] = useState("");
   const [locator, setLocator] = useState("");
+  const [warehouse_Id, setWarehouse_Id] = useState("wh_fg");
   const [isLocatorValid, setIsLocatorValid] = useState(false);
   const [scanResult, setScanResult] = useState("");
   const [scanRecords, setScanRecords] = useState([]);

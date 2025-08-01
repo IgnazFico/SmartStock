@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import Select from "react-select";
 import { debounce } from "lodash";
 import QRCodeTemplate from "./QRCodeTemplate";
 import QRCodeTemplateA4 from "./QRCodeTemplateA4";
@@ -9,6 +10,8 @@ const QRCodeGenerator = () => {
   const [workerBarcode, setWorkerBarcode] = useState("");
   const [isWorkerValid, setIsWorkerValid] = useState(false);
   const [Inventory_ID, setInventory_ID] = useState("");
+  const [prodOptions, setProdOptions] = useState([]);
+  const [prodOrderId, setProdOrderId] = useState("");
   const [part_number, setPartNumber] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [warehouse_Id, setWarehouse_Id] = useState("wh_fg");
@@ -36,6 +39,22 @@ const QRCodeGenerator = () => {
       setInventory_ID("");
     }
   }, [isWorkerValid]);
+
+  useEffect(() => {
+    if (isWorkerValid) {
+      fetch("/api/barcode/available-fg-orders")
+        .then((res) => res.json())
+        .then((data) => setProdOptions(data))
+        .catch(() => setProdOptions([]));
+    }
+  }, [isWorkerValid]);
+ // Fetch Production Order list (only unused)
+  const prodOptionsMapped = prodOptions.map((item) => ({
+    value: item.prod_order_id,
+    label: item.prod_order_id,
+    partNumber: item.material_ID,
+    quantity: item.quantity
+  }));
 
   // Validate worker barcode
   const validateWorkerBarcode = useCallback(
@@ -219,6 +238,17 @@ const QRCodeGenerator = () => {
     root.render(<>{templates}</>);
     printWindow.focus();
     printWindow.print();
+
+    // ✅ Track fg order usage
+    fetch("/api/barcode/track-used", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prod_order_id: prodOrderId,
+        type: "finish_good",
+        used_at: new Date()
+      }),
+    });
   };
 
   const handlePrintA4 = () => {
@@ -283,6 +313,17 @@ const QRCodeGenerator = () => {
     root.render(<>{templates}</>);
     printWindow.focus();
     printWindow.print();
+  
+      // ✅ Track production order usage
+    fetch("/api/barcode/track-used", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prod_order_id: prodOrderId,
+        type: "finish_good",
+        used_at: new Date()
+      }),
+    });
   };
 
   return (
@@ -308,6 +349,22 @@ const QRCodeGenerator = () => {
           disabled
         />
       </div>
+<div className={styles.formGroup}>
+        <label className={styles.label}>Production Order:</label>
+        <Select
+          options={prodOptionsMapped}
+          placeholder="Pilih Production Order"
+          isDisabled={!isWorkerValid}
+          value={prodOptionsMapped.find(opt => opt.value === prodOrderId)}
+          onChange={(selected) => {
+            if (selected) {
+              setProdOrderId(selected.value);
+              setPartNumber(selected.partNumber || "");
+              setQuantity(Number(selected.quantity) || 1);
+            }
+          }}
+        />
+      </div>
       {/* Part Number */}
       <div className={styles.formGroup}>
         <label className={styles.label}>Part Number:</label>
@@ -317,7 +374,7 @@ const QRCodeGenerator = () => {
           onChange={handlePartNumberChange}
           onKeyDown={handleKeyDown}
           className={styles.input}
-          disabled={!isWorkerValid}
+          readOnly disabled
         />
         {suggestions.length > 0 && isSuggestionsVisible && (
           <ul className={styles.suggestionsList} role="listbox">
@@ -349,7 +406,7 @@ const QRCodeGenerator = () => {
           onChange={(e) => setQuantity(Number(e.target.value))}
           min="1"
           className={styles.input}
-          disabled={!isWorkerValid}
+          readOnly disabled
         />
       </div>
       {/* Warehouse ID */}
@@ -360,7 +417,7 @@ const QRCodeGenerator = () => {
           value={warehouse_Id}
           onChange={(e) => setWarehouse_Id(e.target.value)}
           className={styles.input}
-          disabled={!isWorkerValid}
+          readOnly disabled
         />
       </div>
       {/* Copy */}

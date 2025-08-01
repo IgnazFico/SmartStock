@@ -9,6 +9,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, endOfDay } from "date-fns";
 import debounce from "lodash/debounce";
 import styles from "./styles.module.css";
+import * as XLSX from "xlsx";
 
 const Table = React.lazy(() => import("../../components/Table"));
 
@@ -65,6 +66,33 @@ const LogMenu = () => {
   const [filteredData, setFilteredData] = useState([]); // State to manage filtered data
   const [data, setData] = useState([]); // State to hold the fetched data
   const [loadingData, setLoadingData] = useState(true);
+
+  //CONVERT TO XLSX
+const handleExportToExcel = async () => {
+  try {
+    const response = await fetch("/api/exportLogsToExcel"); // Adjust the endpoint as needed
+    if (!response.ok) {
+      throw new Error("Failed to fetch log records");
+    }
+
+    let result = await response.json();
+
+    // Isi default untuk PO kosong
+    result = result.map((row) => ({
+      ...row,
+      po_no: row.po_no && row.po_no.trim() !== "" ? row.po_no : "Default FG",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(result);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Log Data");
+
+    XLSX.writeFile(wb, "log_data.xlsx");
+  } catch (error) {
+    console.error("❌ Error exporting Excel:", error);
+    alert("Gagal mengekspor data. Coba lagi nanti.");
+  }
+};
 
   // Fetch data from the API when the component mounts
   const fetchData = useCallback(async () => {
@@ -180,6 +208,13 @@ const LogMenu = () => {
         >
           FILTER
         </button>
+        <button
+          onClick={handleExportToExcel}
+          className={styles.buttonAnimate}
+      >
+        EXPORT TO EXCEL
+      </button>
+
       </Box>
 
       {/* Table Component */}
