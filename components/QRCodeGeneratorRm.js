@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
   const [workerBarcode, setWorkerBarcode] = useState("");
   const [isWorkerValid, setIsWorkerValid] = useState(false);
   const [rm_ID, setrm_ID] = useState("");
-  const [warehouse_ID] = useState("wh_rm");
+  const [warehouse_ID] = useState("wh_rm");   
   const [part_number, setpart_number] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [po_ID, setpo_ID] = useState("");

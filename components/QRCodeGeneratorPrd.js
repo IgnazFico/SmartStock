@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
   const [copy, setCopy] = useState(1);
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [warehouse_Id, setWarehouse_Id] = useState("wh_wip");
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
   const [prodOptions, setProdOptions] = useState([]);
@@ -151,7 +152,7 @@ import { useRouter } from "next/navigation";
   };
 
   const canPrint = () => {
-    return isWorkerValid && WipId && prodOrderId && partNumber && quantity > 0 && copy > 0;
+    return isWorkerValid && WipId && prodOrderId && warehouse_Id && partNumber && quantity > 0 && copy > 0;
   };
 
   const generateUniqueId = () => `${Date.now()}${Math.floor(Math.random() * 10000)}`;
@@ -304,6 +305,17 @@ import { useRouter } from "next/navigation";
             className={styles.input} min="1" 
             readonly disabled />
       </div>
+      {/* Warehouse ID */}
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Warehouse ID:</label>
+              <input
+                type="text"
+                value={warehouse_Id}
+                onChange={(e) => setWarehouse_Id(e.target.value)}
+                className={styles.input}
+                readOnly disabled
+              />
+            </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Copy:</label>
         <input 
