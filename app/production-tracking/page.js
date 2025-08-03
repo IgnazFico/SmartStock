@@ -37,9 +37,85 @@ export default function ProductionTrackingPage() {
     router.push(`/production-tracking/${orderId}`);
   };
 
+  const exportToCSV = async () => {
+    try {
+      // Fetch production tracking data
+      const trackingRes = await fetch("/api/getProductionTracking");
+      const trackingData = await trackingRes.json();
+
+      // Fetch production material tracking data
+      const materialRes = await fetch("/api/getProductionMaterialTracking");
+      const materialData = await materialRes.json();
+
+      // Merge data based on prod_order_id
+      const mergedData = trackingData.map((tracking) => {
+        const relatedMaterials = materialData.filter(
+          (mat) => mat.prod_order_id === tracking.prod_order_id
+        );
+
+        return {
+          prod_order_id: tracking.prod_order_id,
+          process_id: tracking.process_id,
+          output_quantity: tracking.output_quantity,
+          status: tracking.status,
+          remarks: tracking.remarks || "",
+          materials:
+            relatedMaterials.length > 0
+              ? relatedMaterials
+              : [{ component_id: "-", quantity: "-" }], // default when no material tracking
+        };
+      });
+
+      const headers = [
+        "Order ID",
+        "Routing",
+        "Output Quantity",
+        "Status",
+        "Remarks",
+        "Component (Part Number)",
+        "Component Quantity",
+      ];
+
+      const rows = mergedData.flatMap((entry) =>
+        entry.materials.map((mat) => [
+          entry.prod_order_id,
+          entry.process_id,
+          entry.output_quantity,
+          entry.status,
+          entry.remarks,
+          mat.component_id,
+          mat.quantity,
+        ])
+      );
+
+      // Create CSV content
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((row) => row.join(",")),
+      ].join("\n");
+
+      // Download CSV
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "production_tracking.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Failed to export CSV:", error);
+    }
+  };
+
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Track Production Orders</h1>
+      <div className={styles.header}>
+        <h1 className={styles.title}>Track Production Orders</h1>
+        <button onClick={exportToCSV} className={styles.exportButton}>
+          ⬇ Export to CSV
+        </button>
+      </div>
 
       {loading ? (
         <p className={styles.message}>Loading...</p>
@@ -52,7 +128,7 @@ export default function ProductionTrackingPage() {
           <thead>
             <tr>
               <th>Order ID</th>
-              <th>Item</th>
+              <th>Part Number</th>
               <th>Quantity</th>
               <th>Due Date</th>
               <th>Action</th>

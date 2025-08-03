@@ -1,0 +1,124 @@
+.container {
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.title {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 25px;
+}
+
+.selector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.selector label {
+  font-weight: bold;
+  font-size: 1rem;
+  color: #34495e;
+}
+
+.selector select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f9f9f9;
+  font-size: 0.95rem;
+}
+
+.selector button {
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.selector button:hover {
+  background: linear-gradient(90deg, #0056b3, #003f88);
+}
+
+.selector button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.treeContainer {
+  margin-top: 20px;
+  padding: 20px;
+  background: #fdfdfd;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.tree {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 10px;
+}
+
+.tree li {
+  margin: 12px 0;
+  position: relative;
+  padding-left: 20px;
+}
+
+.tree li::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8px;
+  width: 1px;
+  height: 100%;
+  border-left: 1px dashed #bbb;
+}
+
+.node {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  color: #2c3e50;
+  transition: all 0.2s ease-in-out;
+}
+
+.node:hover {
+  background: #e9f4ff;
+  border-color: #007bff;
+  transform: translateX(3px);
+}
+
+.childList {
+  list-style: none;
+  margin-top: 8px;
+  margin-left: 20px;
+  padding-left: 15px;
+  border-left: 1px dashed #ccc;
+}
+
+.wipTag {
+  background: #ffc107;
+  color: #333;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}

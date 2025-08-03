@@ -30,24 +30,7 @@ export default function ProductionTrackingForm({ prodOrderId }) {
         );
         const processMaterials = await matRes.json(); // Should return: { [process_id]: [{ component_id, default_quantity }] }
 
-        if (order.status === "In Progress") {
-          const trackingRes = await fetch(
-            `/api/productionTracking/${prodOrderId}`
-          );
-          const trackingData = await trackingRes.json();
-
-          setOrderStatus(trackingData.status || order.status);
-
-          setFormData([
-            {
-              process_id: trackingData.process_id,
-              output_quantity: trackingData.output_quantity,
-              status: trackingData.status,
-              remarks: trackingData.remarks,
-              materials: processMaterials[trackingData.process_id] || [],
-            },
-          ]);
-        } else if (order.status === "Completed") {
+        if (order.status === "Completed") {
           const trackingRes = await fetch(
             `/api/productionTracking/${prodOrderId}`
           );
@@ -160,7 +143,7 @@ export default function ProductionTrackingForm({ prodOrderId }) {
         <strong>Production Order:</strong> {prodOrderId}
       </p>
       <p>
-        <strong>Item:</strong> {itemId}
+        <strong>Part Number:</strong> {itemId}
       </p>
       <p>
         <strong>Status:</strong> {orderStatus}
@@ -197,7 +180,7 @@ export default function ProductionTrackingForm({ prodOrderId }) {
 
                 {step.materials?.map((mat, midx) => (
                   <div key={midx}>
-                    <label>Material {mat.component_id} Used</label>
+                    <label>{mat.component_id} Used</label>
                     <input
                       type="number"
                       value={mat.quantity}

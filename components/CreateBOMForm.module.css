@@ -1,0 +1,118 @@
+.formContainer {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.label {
+  font-weight: bold;
+  margin-bottom: 6px;
+  display: block;
+  color: #333;
+}
+
+.inputField {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 20px;
+  color: #444;
+}
+
+.bomTree {
+  margin-top: 15px;
+  border-left: 2px dashed #bbb;
+  padding-left: 20px;
+}
+
+/* Component block styling */
+.componentBlock {
+  margin: 10px 0;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  position: relative;
+}
+
+.componentBlock::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: -21px;
+  width: 20px;
+  height: 2px;
+  background: #bbb;
+}
+
+.root::before {
+  content: none;
+}
+
+/* Grid layout for fields */
+.componentGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.subcomponent {
+  margin-left: 25px;
+  border-left: 2px dashed #ccc;
+  padding-left: 15px;
+  margin-top: 10px;
+}
+
+/* Buttons */
+.addSub {
+  background-color: #6a1b9a;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.addSub:hover {
+  opacity: 0.9;
+}
+
+.addComponent {
+  background-color: #1565c0;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+.addComponent:hover {
+  opacity: 0.9;
+}
+
+.saveButton {
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  padding: 10px;
+  width: 100%;
+  border-radius: 6px;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.saveButton:hover {
+  opacity: 0.9;
+}

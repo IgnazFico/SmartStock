@@ -15,6 +15,7 @@ export default function NavBar() {
   const [isScanOpen, setScanOpen] = useState(false);
   const [isPrintOpen, setPrintOpen] = useState(false);
   const [isPurchaseOpen, setPurchaseOpen] = useState(false);
+  const [isMasterDataOpen, setMasterDataOpen] = useState(false);
 
   const router = useRouter();
 
@@ -147,10 +148,29 @@ export default function NavBar() {
           )}
           {role === "admin" && (
             <li>
-              <a href="/master_data">
+              <div
+                className={styles.dropdown}
+                onClick={() => setMasterDataOpen(!isMasterDataOpen)}
+              >
                 <img src="/master-data.png" alt="Master Data" />
                 Master Data
-              </a>
+              </div>
+              {isMasterDataOpen && (
+                <ul className={styles.dropdownMenu}>
+                  <li>
+                    <a href="/view-bom">BoM</a>
+                  </li>
+                  <li>
+                    <a href="/view-routing">Routing</a>
+                  </li>
+                  <li>
+                    <a href="/warhouse-master">Warehousing</a>
+                  </li>
+                  <li>
+                    <a href="/item-master">Items</a>
+                  </li>
+                </ul>
+              )}
             </li>
           )}
           <li>

@@ -10,7 +10,7 @@ async function insertBOM(db, parent, components) {
       component_item_id: item,
       quantity: Number(quantity),
       unit: unit,
-      is_wip: !!subcomponents?.length,
+      is_wip: Array.isArray(subcomponents) && subcomponents.length > 0,
     });
 
     if (subcomponents?.length) {

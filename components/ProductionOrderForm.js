@@ -181,7 +181,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
             <input type="text" value={formData.prod_order_id} readOnly />
           </div>
           <div className={styles.formGroup}>
-            <label>Item</label>
+            <label>Part Number</label>
             <input
               type="text"
               value={formData.item_id || ""}

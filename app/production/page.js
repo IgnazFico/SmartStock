@@ -97,7 +97,7 @@ export default function ProductionOrders() {
           <thead>
             <tr>
               <th>Order ID</th>
-              <th>Item ID</th>
+              <th>Part Number</th>
               <th>Quantity</th>
               <th>Order Date</th>
               <th>Due Date</th>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import styles from "./CreateBOMForm.module.css"; // Import module CSS
 
 export default function CreateBOMForm() {
   const [mainItem, setMainItem] = useState("");
@@ -23,38 +24,87 @@ export default function CreateBOMForm() {
     ]);
   };
 
-  const addSubcomponent = (parentIndex) => {
-    setComponents((prevComponents) => {
-      const updated = [...prevComponents];
+  const addSubcomponentAtPath = (prev, path) => {
+    const updated = structuredClone(prev);
+    let ref = updated;
+    for (let i = 0; i < path.length; i++) {
+      ref = ref[path[i]].subcomponents;
+    }
+    ref.push({ item: "", quantity: "", unit: "", subcomponents: [] });
+    return updated;
+  };
 
-      // Make a deep copy of the parent object
-      const parent = { ...updated[parentIndex] };
+  const updateNestedComponent = (prev, path, field, value) => {
+    const updated = structuredClone(prev);
+    let ref = updated;
+    for (let i = 0; i < path.length - 1; i++) {
+      ref = ref[path[i]].subcomponents;
+    }
+    const last = path[path.length - 1];
+    ref[last] = { ...ref[last], [field]: value };
+    return updated;
+  };
 
-      if (!Array.isArray(parent.subcomponents)) {
-        parent.subcomponents = [];
-      }
+  const renderComponentForm = (comp, path, parentSetter, isRoot = false) => {
+    const updateComponent = (field, value) => {
+      parentSetter((prev) => updateNestedComponent(prev, path, field, value));
+    };
 
-      // Immutable add
-      parent.subcomponents = [
-        ...parent.subcomponents,
-        { item: "", quantity: "", unit: "", subcomponents: [] },
-      ];
+    const addSub = () => {
+      parentSetter((prev) => addSubcomponentAtPath(prev, path));
+    };
 
-      // Update parent in the main list
-      updated[parentIndex] = parent;
+    return (
+      <div
+        key={path.join("-")}
+        className={`${styles.componentBlock} ${isRoot ? styles.root : ""}`}
+      >
+        <div className={styles.componentGrid}>
+          <input
+            type="text"
+            placeholder="Item"
+            value={comp.item}
+            onChange={(e) => updateComponent("item", e.target.value)}
+            required
+            className={styles.inputField}
+          />
+          <input
+            type="number"
+            placeholder="Quantity"
+            value={comp.quantity}
+            onChange={(e) => updateComponent("quantity", e.target.value)}
+            required
+            className={styles.inputField}
+          />
+          <input
+            type="text"
+            placeholder="Unit"
+            value={comp.unit}
+            onChange={(e) => updateComponent("unit", e.target.value)}
+            className={styles.inputField}
+          />
+        </div>
 
-      return updated;
-    });
+        {/* Render Subcomponents recursively */}
+        {Array.isArray(comp.subcomponents) && comp.subcomponents.length > 0 && (
+          <div className={styles.subcomponent}>
+            {comp.subcomponents.map((sub, subIdx) =>
+              renderComponentForm(sub, [...path, subIdx], parentSetter)
+            )}
+          </div>
+        )}
+
+        <button type="button" className={styles.addSub} onClick={addSub}>
+          + Add Subcomponent
+        </button>
+      </div>
+    );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      mainItem,
-      components,
-    };
-
+    const payload = { mainItem, components };
     const res = await fetch("/api/bom", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -65,120 +115,36 @@ export default function CreateBOMForm() {
     alert(data.message || "BOM saved.");
   };
 
-  const updateNestedComponent = (prev, path, field, value) => {
-    const updated = structuredClone(prev); // safer deep copy
-    let ref = updated;
-
-    for (let i = 0; i < path.length - 1; i++) {
-      ref = ref[path[i]].subcomponents;
-    }
-
-    const last = path[path.length - 1];
-    ref[last] = {
-      ...ref[last],
-      [field]: value,
-    };
-
-    return updated;
-  };
-
-  const addSubcomponentAtPath = (prev, path) => {
-    const updated = structuredClone(prev);
-    let ref = updated;
-
-    for (let i = 0; i < path.length; i++) {
-      ref = ref[path[i]].subcomponents;
-    }
-
-    ref.push({ item: "", quantity: "", unit: "", subcomponents: [] });
-    return updated;
-  };
-
-  // Recursive render for subcomponents
-  const renderComponentForm = (comp, path, parentSetter) => {
-    const updateComponent = (field, value) => {
-      parentSetter((prev) => updateNestedComponent(prev, path, field, value));
-    };
-
-    const addSub = () => {
-      parentSetter((prev) => addSubcomponentAtPath(prev, path));
-    };
-
-    return (
-      <div key={path.join("-")} className="border p-4 mb-2">
-        <div className="grid grid-cols-3 gap-4 mb-2">
-          <input
-            type="text"
-            placeholder="Item"
-            value={comp.item}
-            onChange={(e) => updateComponent("item", e.target.value)}
-            className="border p-2"
-            required
-          />
-          <input
-            type="number"
-            placeholder="Quantity"
-            value={comp.quantity}
-            onChange={(e) => updateComponent("quantity", e.target.value)}
-            className="border p-2"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Unit"
-            value={comp.unit}
-            onChange={(e) => updateComponent("unit", e.target.value)}
-            className="border p-2"
-          />
-        </div>
-
-        {Array.isArray(comp.subcomponents) &&
-          comp.subcomponents.map((sub, subIdx) =>
-            renderComponentForm(sub, [...path, subIdx], parentSetter)
-          )}
-
-        <button
-          type="button"
-          className="text-sm px-3 py-1 bg-purple-600 text-white rounded"
-          onClick={addSub}
-        >
-          + Add Subcomponent
-        </button>
-      </div>
-    );
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className={styles.formContainer}>
       <div>
-        <label className="block font-semibold">Main Item</label>
+        <label className={styles.label}>Main Item</label>
         <input
           type="text"
           value={mainItem}
           onChange={(e) => setMainItem(e.target.value)}
-          className="border p-2 w-full"
+          className={styles.inputField}
           required
         />
       </div>
 
-      <h2 className="font-bold">Component Items</h2>
-      {components.map((comp, idx) =>
-        renderComponentForm(comp, [idx], setComponents)
-      )}
+      <h2 className={styles.sectionTitle}>Component Items</h2>
+      <div className={styles.bomTree}>
+        {components.map((comp, idx) =>
+          renderComponentForm(comp, [idx], setComponents, true)
+        )}
+      </div>
 
       <button
         type="button"
         onClick={() => addComponent(setComponents)}
-        className="px-4 py-2 bg-blue-600 text-white rounded"
+        className={styles.addComponent}
       >
         + Add Component
       </button>
 
       <div>
-        <button
-          type="submit"
-          className="mt-4 px-6 py-2 bg-green-600 text-white rounded"
-        >
+        <button type="submit" className={styles.saveButton}>
           Save BOM
         </button>
       </div>
