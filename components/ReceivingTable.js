@@ -353,9 +353,8 @@ const ReceivingTable = ({ records = [] }) => {
                   <th>Material</th>
                   <th>Ordered Qty</th>
                   <th>Received Qty</th>
-                  {session?.user?.department === "logistics" && (
-                    <th>Input Qty</th>
-                  )}
+                  {session?.user?.department === "logistics" &&
+                    selectedRecord?.status !== "Received" && <th>Input Qty</th>}
                 </tr>
               </thead>
               <tbody>
@@ -377,20 +376,24 @@ const ReceivingTable = ({ records = [] }) => {
                       </td>
                       <td>{item.quantity}</td>
                       <td>{item.received_qty || 0}</td>
-                      {session?.user?.department === "logistics" && (
-                        <td>
-                          <input
-                            type="number"
-                            min="0"
-                            max={item.quantity - (item.received_qty || 0)}
-                            value={receivedQuantities[item.material_ID] || ""}
-                            onChange={(e) =>
-                              handleQtyChange(item.material_ID, e.target.value)
-                            }
-                            className={styles.qtyInput}
-                          />
-                        </td>
-                      )}
+                      {session?.user?.department === "logistics" &&
+                        selectedRecord?.status !== "Received" && (
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              max={item.quantity - (item.received_qty || 0)}
+                              value={receivedQuantities[item.material_ID] || ""}
+                              onChange={(e) =>
+                                handleQtyChange(
+                                  item.material_ID,
+                                  e.target.value
+                                )
+                              }
+                              className={styles.qtyInput}
+                            />
+                          </td>
+                        )}
                     </tr>
                   ))
                 )}
