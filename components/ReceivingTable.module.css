@@ -15,7 +15,7 @@
   border-radius: 8px;
   box-shadow: inset 0 1.5px 4px rgba(0, 0, 0, 0.08);
   font-size: 15px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -25,31 +25,13 @@
   outline: none;
 }
 
-.newPOButton {
-  padding: 12px 20px;
-  background-color: #2ca65f;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 16px;
-  box-shadow: 0 4px 8px rgba(44, 166, 95, 0.4);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.newPOButton:hover {
-  background-color: #0a4e70;
-  box-shadow: 0 6px 12px rgba(10, 78, 112, 0.6);
-}
-
 /* Tabel */
 .table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 6px; /* memberi jarak antar baris */
   background-color: white;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   box-shadow: 0 3px 8px rgba(10, 78, 112, 0.1);
   border-radius: 12px;
   overflow: hidden;
@@ -128,8 +110,14 @@
 }
 
 /* Info hasil */
-.resultsSummary {
+.resultsBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
+  gap: 10px;
+}
+.resultsSummary {
   padding: 10px 18px;
   background-color: #e0f4ff;
   color: #0a4e70;
@@ -138,7 +126,24 @@
   border-left: 5px solid #0a5775;
   border-radius: 6px;
   display: inline-block;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+.exportButton {
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.exportButton:hover {
+  background-color: #144fcf;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
 }
 
 /* Heading Utama */
@@ -147,7 +152,7 @@
   font-weight: 900;
   color: #0a4e70;
   margin-bottom: 18px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   text-shadow: 0 1px 2px rgba(10, 78, 112, 0.3);
 }
 
@@ -160,7 +165,7 @@
   border-radius: 10px;
   background-color: #f4faff;
   box-shadow: 0 4px 12px rgba(10, 87, 117, 0.1);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   transition: box-shadow 0.3s ease;
 }
 
@@ -194,7 +199,12 @@
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  background-color: rgba(0, 0, 0, 0.3); /* sedikit dikurangi opasitas agar blur terlihat */
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.3
+  ); /* sedikit dikurangi opasitas agar blur terlihat */
   backdrop-filter: blur(6px); /* efek blur */
 }
 
@@ -206,19 +216,19 @@
   max-width: 300px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
   position: relative;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Tombol Aksi */
 .receiveButton {
   margin-top: 20px;
-  padding: 12px 24px;
+  padding: 10px 20px;
   background-color: #0a5775;
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 3px 8px rgba(10, 87, 117, 0.2);
@@ -257,7 +267,18 @@
   min-width: 120px;
   box-shadow: inset 0 1.5px 4px rgba(0, 0, 0, 0.08);
   color: #08476f;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.searchInput {
+  padding: 12px 16px;
+  width: 280px;
+  border: 1.5px solid #a8c0d8;
+  border-radius: 8px;
+  box-shadow: inset 0 1.5px 4px rgba(0, 0, 0, 0.08);
+  font-size: 15px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -276,6 +297,38 @@
 .searchAndFilterGroup {
   display: flex;
   align-items: center;
-  gap: 12px; 
+  gap: 12px;
   flex-wrap: wrap;
+}
+
+/* Items table */
+.itemsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.itemsTable th {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.itemsTable td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: center;
+}
+
+/* Input qty */
+.qtyInput {
+  width: 60px;
+  padding: 4px;
+  font-size: 14px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }

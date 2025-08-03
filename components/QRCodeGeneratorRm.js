@@ -1,4 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+"use client";
+
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { debounce } from "lodash";
 import Select from "react-select";
 import ReactDOM from "react-dom";
@@ -6,12 +8,17 @@ import QRCodeTemplate from "./QRCodeTemplateRm";
 import QRCodeTemplateA4 from "./QRCodeTemplateA4Rm";
 import { createRoot } from "react-dom/client";
 import styles from "./QRCodeGeneratorRm.module.css";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
-const QRCodeGenerator = () => {
+  const QRCodeGenerator = () => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [workerBarcode, setWorkerBarcode] = useState("");
   const [isWorkerValid, setIsWorkerValid] = useState(false);
   const [rm_ID, setrm_ID] = useState("");
-  const [warehouse_ID] = useState("wh_rm");
+  const [warehouse_ID] = useState("wh_rm");   
   const [part_number, setpart_number] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [po_ID, setpo_ID] = useState("");
@@ -21,6 +28,17 @@ const QRCodeGenerator = () => {
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
   const [poOptions, setPoOptions] = useState([]);
+
+  // ⛔ Blokir user yang tidak berasal dari Logistics atau tidak admin/super
+  useEffect(() => {
+    if (status === "loading") return;
+
+    const user = session?.user;
+    if (!user || !["logistics"].includes(user.department?.toLowerCase()) &&
+      !["admin", "super"].includes(user.role)) {
+      router.push("/unauthorized");
+    }
+  }, [session, status, router]);
 
   useEffect(() => {
     if (isWorkerValid) {

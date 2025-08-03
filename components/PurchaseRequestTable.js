@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import styles from "./PurchaseRequestTable.module.css";
 import ApprovalModal from "./ApprovalModal";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
   const recordsPerPage = 10;
 
-  // Local state
   const [localRecords, setLocalRecords] = useState(records);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -16,17 +17,14 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [approvalDetail, setApprovalDetail] = useState(null);
 
-  // Sync props records to local state
   useEffect(() => {
     setLocalRecords(records);
   }, [records]);
 
-  // Reset page when search term changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  // Filter records based on pr_ID or users_ID containing searchTerm
   const filteredRecords = localRecords.filter((r) => {
     const matchesSearch = [r?.pr_ID, r?.users_ID].some((field) =>
       String(field || "")
@@ -39,13 +37,11 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
     return matchesSearch && matchesStatus;
   });
 
-  // Slice records for current page
   const currentRecords = filteredRecords.slice(
     (currentPage - 1) * recordsPerPage,
     currentPage * recordsPerPage
   );
 
-  // Fetch PR data to refresh list
   const fetchPRs = useCallback(async () => {
     try {
       const res = await fetch("/api/pr");
@@ -57,7 +53,6 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
     }
   }, []);
 
-  // When user clicks a row
   const handleRowClick = async (record) => {
     setSelectedRecord(record);
 
@@ -82,8 +77,76 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
     }
   };
 
-  // Pagination buttons handler
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  /** EXPORT TO EXCEL FUNCTION WITH ITEMS */
+  const exportToExcel = async () => {
+    if (filteredRecords.length === 0) {
+      alert("No data for export.");
+      return;
+    }
+
+    try {
+      // Ambil semua PR items
+      const resItems = await fetch("/api/pr-items");
+      if (!resItems.ok) throw new Error("Gagal mengambil PR Items");
+      const allItems = await resItems.json(); // [{ pr_ID, material_ID, quantity }]
+
+      // Gabungkan items ke masing-masing PR
+      const exportData = filteredRecords.flatMap((pr) => {
+        const items = allItems.filter((item) => item.pr_ID === pr.pr_ID);
+
+        // Kalau tidak ada item, tetap export 1 row tanpa item
+        if (items.length === 0) {
+          return [
+            {
+              "PR ID": pr.pr_ID,
+              "Users ID": pr.users_ID,
+              Department: pr.department,
+              "Request Date": pr.request_date
+                ? new Date(pr.request_date).toISOString().split("T")[0]
+                : "",
+              Priority: pr.priority,
+              Status: pr.status,
+              "Material ID": "",
+              Quantity: "",
+            },
+          ];
+        }
+
+        // Kalau ada items, buat row per item
+        return items.map((item) => ({
+          "PR ID": pr.pr_ID,
+          "Users ID": pr.users_ID,
+          Department: pr.department,
+          "Request Date": pr.request_date
+            ? new Date(pr.request_date).toISOString().split("T")[0]
+            : "",
+          Priority: pr.priority,
+          Status: pr.status,
+          "Material ID": item.material_ID,
+          Quantity: item.quantity,
+        }));
+      });
+
+      // Buat file Excel
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Purchase Requests");
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+      const blob = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      saveAs(blob, `purchase_requests_${Date.now()}.xlsx`);
+    } catch (err) {
+      console.error(err);
+      alert("Fail export to Excel");
+    }
+  };
 
   return (
     <div>
@@ -105,24 +168,31 @@ const PurchaseRequestTable = ({ records = [], onAddNewPR, onRecordClick }) => {
             aria-label="Filter by status"
           >
             <option value="All">All</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="converted">Converted</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Converted">Converted</option>
           </select>
         </div>
 
-        <button className={styles.newPRButton} onClick={onAddNewPR}>
-          + New PR
-        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button className={styles.newPRButton} onClick={onAddNewPR}>
+            + New PR
+          </button>
+        </div>
       </div>
 
       {filteredRecords.length === 0 ? (
         <p className={styles.noData}>Tidak ada data Purchase Request.</p>
       ) : (
         <>
-          <div className={styles.resultsSummary}>
-            {filteredRecords.length} records{" "}
+          <div className={styles.resultsBar}>
+            <div className={styles.resultsSummary}>
+              {filteredRecords.length} records
+            </div>
+            <button onClick={exportToExcel} className={styles.exportButton}>
+              Export to Excel
+            </button>
           </div>
 
           <table className={styles.table}>

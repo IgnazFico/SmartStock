@@ -8,7 +8,7 @@ export default function FormPurchaseOrder({ onSubmitSuccess, onClose }) {
     order_date: "",
     supplier_ID: "",
     received_date: "",
-    status: "order",
+    status: "Pending",
   });
 
   const [orderItems, setOrderItems] = useState([
@@ -64,7 +64,9 @@ export default function FormPurchaseOrder({ onSubmitSuccess, onClose }) {
     setError(null);
 
     const payload = {
-      ...formData,
+      order_date: formData.order_date,
+      supplier_ID: formData.supplier_ID,
+      received_date: formData.received_date,
       items: orderItems,
     };
 
@@ -79,7 +81,7 @@ export default function FormPurchaseOrder({ onSubmitSuccess, onClose }) {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Gagal menyimpan data PO");
+        throw new Error(errorData.error || "Fail saving PO Data");
       }
 
       const savedPO = await res.json();
@@ -199,7 +201,7 @@ export default function FormPurchaseOrder({ onSubmitSuccess, onClose }) {
 
         <hr />
         <button className={styles.formButton} type="submit" disabled={loading}>
-          {loading ? "Menyimpan..." : "Save PO"}
+          {loading ? "Saving..." : "Save PO"}
         </button>
       </form>
     </div>

@@ -38,43 +38,67 @@ export async function PUT(request) {
 
     if (!session || session.user.department !== "logistics") {
       return NextResponse.json(
-        {
-          message:
-            "Unauthorized. Only logistics department can update receiving status.",
-        },
+        { message: "Unauthorized. Only logistics can update receiving." },
         { status: 403 }
       );
     }
 
-    const { po_ID, received_date, status } = await request.json();
+    const { po_ID, received_date, items } = await request.json();
 
-    if (!po_ID) {
+    if (!po_ID || !items || items.length === 0) {
       return NextResponse.json(
-        { message: "po_ID wajib diisi" },
+        { message: "po_ID dan items required!" },
         { status: 400 }
       );
     }
 
+    // Format tanggal jadi YYYY-MM-DD
+    const formattedDate = new Date(received_date).toISOString().split("T")[0];
+
     const db = await connect();
-    const collection = db.collection("purchase_orders");
+    const itemsCollection = db.collection("purchase_orders_items");
+    const poCollection = db.collection("purchase_orders");
 
-    const result = await collection.updateOne(
-      { po_ID },
-      { $set: { received_date, status } }
-    );
+    // Update received_qty tiap item
+    for (const { material_ID, qty } of items) {
+      const item = await itemsCollection.findOne({ po_ID, material_ID });
+      const currentReceived = item.received_qty || 0;
+      const maxQty = item.quantity - currentReceived;
 
-    if (result.modifiedCount === 0) {
-      return NextResponse.json(
-        { message: "Tidak ada data yang diperbarui." },
-        { status: 404 }
+      if (qty > maxQty) {
+        return NextResponse.json(
+          {
+            message: `Qty for ${material_ID} exceeds the remaining (${maxQty})`,
+          },
+          { status: 400 }
+        );
+      }
+
+      await itemsCollection.updateOne(
+        { po_ID, material_ID },
+        { $inc: { received_qty: qty } }
       );
     }
 
-    return NextResponse.json({ message: "Data berhasil diperbarui." });
+    // Cek semua item setelah update
+    const allItems = await itemsCollection.find({ po_ID }).toArray();
+    const fullyReceived = allItems.every(
+      (item) => (item.received_qty || 0) >= item.quantity
+    );
+
+    const status = fullyReceived ? "Received" : "Partially Received";
+
+    // Update status & tanggal di purchase_orders
+    await poCollection.updateOne(
+      { po_ID },
+      { $set: { status, received_date: formattedDate } }
+    );
+
+    return NextResponse.json({ message: "Receiving updated successfully." });
   } catch (err) {
     console.error("🔥 API Error PUT /api/receiving:", err);
     return NextResponse.json(
-      { message: "Gagal memperbarui data." },
+      { message: "Gagal memperbarui receiving." },
       { status: 500 }
     );
   }

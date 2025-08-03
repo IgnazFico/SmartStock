@@ -7,7 +7,12 @@ export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.position !== "supervisor") {
+    console.log("=== [DEBUG APPROVAL API] Session data ===");
+    console.log("User from session:", session?.user);
+    console.log("Position:", session?.user?.position);
+    console.log("Department:", session?.user?.department);
+
+    if (!session || session.user.position?.toLowerCase() !== "supervisor") {
       return NextResponse.json(
         { error: "Unauthorized. Only supervisors can approve or reject." },
         { status: 403 }
@@ -26,8 +31,8 @@ export async function POST(req) {
       );
     }
 
-    const statusLower = approval_status.toLowerCase();
-    if (!["approved", "rejected", "pending"].includes(statusLower)) {
+    const validStatuses = ["Approved", "Rejected", "Pending"];
+    if (!validStatuses.includes(approval_status)) {
       return NextResponse.json(
         { error: "Status approval tidak valid" },
         { status: 400 }
@@ -50,10 +55,10 @@ export async function POST(req) {
     }
 
     // Jika PR sudah approved/rejected, blokir perubahan lagi
-    if (prData.status && prData.status.toLowerCase() !== "pending") {
+    if (prData.status && prData.status !== "Pending") {
       return NextResponse.json(
         {
-          error: `PR sudah berstatus '${prData.status}', tidak bisa di-approve/reject lagi.`,
+          error: `PR already have status '${prData.status}', cannot be approved/rejected again.`,
         },
         { status: 409 }
       );
@@ -65,7 +70,7 @@ export async function POST(req) {
         { _id: existingApproval._id },
         {
           $set: {
-            approval_status: statusLower,
+            approval_status: approval_status,
             approval_date: approval_date ? new Date(approval_date) : new Date(),
             remarks: remarks || "",
           },
@@ -78,15 +83,15 @@ export async function POST(req) {
         approval_ID,
         pr_ID,
         users_ID,
-        approval_status: statusLower,
+        approval_status: approval_status,
         approval_date: approval_date ? new Date(approval_date) : new Date(),
         remarks: remarks || "",
       });
     }
 
     // Update status dan remarks di koleksi purchase_requests
-    const updateFields = { status: statusLower };
-    if (statusLower === "rejected") updateFields.remarks = remarks || "";
+    const updateFields = { status: approval_status };
+    if (approval_status === "Rejected") updateFields.remarks = remarks || "";
 
     const updateResult = await db
       .collection("purchase_requests")
@@ -100,7 +105,7 @@ export async function POST(req) {
     }
 
     return NextResponse.json(
-      { message: "Approval berhasil disimpan dan status PR diperbarui" },
+      { message: "Approval successfully saved and PR status updated" },
       { status: 200 }
     );
   } catch (error) {

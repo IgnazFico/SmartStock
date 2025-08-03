@@ -11,7 +11,7 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
     users_ID: "",
     department: "",
     request_date: "",
-    priority: "medium",
+    priority: "Medium",
   });
 
   const [items, setItems] = useState([{ material_ID: "", quantity: "" }]);
@@ -97,7 +97,7 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || "Gagal menyimpan data PR.");
+        throw new Error(err.message || "Fail saving PR data.");
       }
 
       const saved = await res.json();
@@ -151,9 +151,9 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
             onChange={handleFormChange}
             required
           >
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
           </select>
         </label>
 
@@ -224,7 +224,7 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
         {error && <p className={styles.error}>{error}</p>}
 
         <button type="submit" className={styles.formButton} disabled={loading}>
-          {loading ? "Menyimpan..." : "Save PR"}
+          {loading ? "Saving..." : "Save PR"}
         </button>
       </form>
     </div>

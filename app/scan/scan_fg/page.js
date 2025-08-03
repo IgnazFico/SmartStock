@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import ScanTable from "../../../components/ScanTable";
 import styles from "./styles.module.css";
 
+
 export default function Scan() {
   const [workerBarcode, setWorkerBarcode] = useState("");
   const [isWorkerValid, setIsWorkerValid] = useState(false);
@@ -19,9 +20,22 @@ export default function Scan() {
 
   const { data: session, status } = useSession();
   const loading = status === "loading";
+  const router = useRouter();
   const barcodeInputRef = useRef(null);
   const locatorInputRef = useRef(null);
   const qrInputRef = useRef(null);
+ useEffect(() => {
+   if (status === "loading") return;
+
+  const user = session?.user;
+    if (
+      !user ||
+      (!["logistics"].includes(user.department?.toLowerCase()) &&
+        !["admin", "super"].includes(user.role))
+    ) {
+      router.push("/unauthorized");
+    }
+  }, [session, status, router]);
 
   useEffect(() => {
     if (barcodeInputRef.current && !loading) {
@@ -55,8 +69,6 @@ export default function Scan() {
   if (loading) {
     return <p>Loading...</p>;
   }
-
-  const router = useRouter();
 
   if (!session) {
     router.push("/auth");
@@ -151,7 +163,7 @@ export default function Scan() {
         Inventory_ID,
         part_number,
         quantity,
-        //warehouse_Id,
+        warehouse_Id,
         workerBarcodeFromQR,
         time_submitted
       ] = scannedData.split("|");

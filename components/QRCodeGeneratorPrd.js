@@ -5,8 +5,13 @@ import QRCodeTemplate from "./QRCodeTemplatePrd";
 import QRCodeTemplateA4 from "./QRCodeTemplateA4Prd";
 import { createRoot } from "react-dom/client";
 import styles from "./QRCodeGeneratorPrd.module.css";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
-const QRCodeGenerator = () => {
+  const QRCodeGenerator = () => {
+  const { data: session, status } = useSession(); // 🟢 Harus di sini
+  const router = useRouter();
+
   const [workerBarcode, setWorkerBarcode] = useState("");
   const [isWorkerValid, setIsWorkerValid] = useState(false);
   const [WipId, setWipId] = useState("");
@@ -16,9 +21,23 @@ const QRCodeGenerator = () => {
   const [copy, setCopy] = useState(1);
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [warehouse_Id, setWarehouse_Id] = useState("wh_wip");
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
   const [prodOptions, setProdOptions] = useState([]);
+   // ⛔ Blokir user yang tidak berasal dari Logistics atau tidak admin/super
+  useEffect(() => {
+    if (status === "loading") return;
+
+    const user = session?.user;
+    if (
+      !user ||
+      (!["production"].includes(user.department?.toLowerCase()) &&
+        !["admin", "super"].includes(user.role))
+    ) {
+      router.push("/unauthorized");
+    }
+  }, [session, status, router]);
 
   useEffect(() => {
     if (isWorkerValid) {
@@ -133,7 +152,7 @@ const QRCodeGenerator = () => {
   };
 
   const canPrint = () => {
-    return isWorkerValid && WipId && prodOrderId && partNumber && quantity > 0 && copy > 0;
+    return isWorkerValid && WipId && prodOrderId && warehouse_Id && partNumber && quantity > 0 && copy > 0;
   };
 
   const generateUniqueId = () => `${Date.now()}${Math.floor(Math.random() * 10000)}`;
@@ -245,7 +264,7 @@ const QRCodeGenerator = () => {
         <label className={styles.label}>Production Order:</label>
         <Select
           options={prodOptionsMapped}
-          placeholder="Pilih Production Order"
+          placeholder="SELECT PRODUCTION ORDER"
           isDisabled={!isWorkerValid}
           value={prodOptionsMapped.find(opt => opt.value === prodOrderId)}
           onChange={(selected) => {
@@ -286,6 +305,17 @@ const QRCodeGenerator = () => {
             className={styles.input} min="1" 
             readonly disabled />
       </div>
+      {/* Warehouse ID */}
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Warehouse ID:</label>
+              <input
+                type="text"
+                value={warehouse_Id}
+                onChange={(e) => setWarehouse_Id(e.target.value)}
+                className={styles.input}
+                readOnly disabled
+              />
+            </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Copy:</label>
         <input 
