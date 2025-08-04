@@ -13,8 +13,8 @@ export default function PRPage() {
   const [showForm, setShowForm] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
-  
-    useEffect(() => {
+
+  useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth");
       return;
@@ -38,8 +38,7 @@ export default function PRPage() {
     }
   }, [status]);
 
-  const handleRecordClick = (record) => {
-  };
+  const handleRecordClick = (record) => {};
 
   const handleNewPRSuccess = async () => {
     setShowForm(false);
@@ -71,7 +70,7 @@ export default function PRPage() {
       ) : (
         <PurchaseRequestTable
           records={records}
-          onRecordClick={handleRecordClick}  
+          onRecordClick={handleRecordClick}
           onAddNewPR={() => setShowForm(true)}
         />
       )}

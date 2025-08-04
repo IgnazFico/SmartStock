@@ -7,7 +7,7 @@ export async function GET(request) {
   try {
     const db = await connect();
 
-    const collection = db.collection("item_master");
+    const collection = db.collection("material");
     const records = await collection.find({}).toArray();
 
     const response = NextResponse.json(records, { status: 200 });

@@ -4,7 +4,7 @@ import connect from "../../../utils/db";
 export async function POST(req) {
   try {
     // Get the item details from the request body
-    const { item_id, part_number, description } = await req.json();
+    const { item_id, toy_number, description } = await req.json();
     const db = await connect();
 
     // Check if the item_id already exists in the database
@@ -23,7 +23,7 @@ export async function POST(req) {
       // item_id is unique, proceed with insertion
       const newItem = {
         item_id,
-        part_number,
+        toy_number,
         description,
       };
       const result = await db.collection("item_master").insertOne(newItem);

@@ -72,7 +72,7 @@ export default function BOMTreeViewer() {
         </button>
         <button
           type="button"
-          onClick={() => router.push("/create-bom")}
+          onClick={() => router.push("/master_data/create-bom")}
           className={styles.createButton}
         >
           ➕ Create BOM

@@ -6,17 +6,20 @@ import connect from "../../../utils/db";
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const item_id = searchParams.get("item_id");
+    const process_id = searchParams.get("process_id");
 
-    if (!item_id) {
-      return NextResponse.json({ message: "Missing item_id" }, { status: 400 });
+    if (!process_id) {
+      return NextResponse.json(
+        { message: "Missing process_id" },
+        { status: 400 }
+      );
     }
 
     const db = await connect();
 
     const processes = await db
       .collection("process")
-      .find({ item_id })
+      .find({ process_id })
       .toArray();
 
     return NextResponse.json(processes);

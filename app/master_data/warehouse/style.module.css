@@ -1,0 +1,88 @@
+.container {
+  padding: 32px 24px;
+  margin: 32px auto;
+  background: linear-gradient(135deg, #e3f0fa 0%, #f9fafb 100%);
+  border-radius: 18px;
+  max-width: 1200px;
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.1);
+  min-height: 80vh;
+}
+
+.container h1 {
+  color: #074d6f;
+  margin-bottom: 24px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.container h2 {
+  color: #074d6f;
+  margin-bottom: 16px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.button {
+  appearance: none;
+  background: linear-gradient(90deg, #0a6ebd 0%, #074d6f 100%);
+  border-radius: 10px;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 5px 10px 5px 0;
+  min-height: 45px;
+  min-width: 140px;
+  padding: 10px 24px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(7, 77, 111, 0.08);
+  transition: all 0.2s;
+}
+
+.button:disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.button:hover {
+  box-shadow: 0 4px 16px rgba(7, 77, 111, 0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.button:active {
+  box-shadow: none;
+  transform: translateY(0);
+}
+
+.tablesContainer {
+  display: flex;
+  gap: 32px;
+  max-height: 75vh;
+  margin-top: 24px;
+}
+
+.itemsTable,
+.locatorTable,
+.warehouseTable {
+  min-width: 320px;
+  background: #fff;
+  padding: 18px 16px 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(7, 77, 111, 0.07);
+  overflow: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.locatorTable {
+  flex: 2;
+}
+
+.warehouseTable {
+  flex: 2;
+  margin-left: 16px;
+}

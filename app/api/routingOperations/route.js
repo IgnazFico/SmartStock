@@ -10,7 +10,7 @@ export async function GET(req) {
 
   const db = await connect();
 
-  // Join process_operation and operation table based on operation_ID
+  // Join process_operation and operation table based on operation_id
   const pipeline = [
     { $match: { process_id: process_id } },
     {

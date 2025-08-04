@@ -1,22 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./CreateRoutingForm.module.css";
 
 export default function CreateRoutingForm() {
   const [itemID, setItemID] = useState("");
   const [routingID, setRoutingID] = useState("");
   const [processName, setProcessName] = useState("");
-  const [wipCode, setWipCode] = useState("");
+  const [operations, setOperations] = useState([]);
   const [processes, setProcesses] = useState([
     {
       operation: 10,
-      workCenter: "",
       machineCode: "",
+      workCenter: "",
       machineName: "",
-      materials: [{ materialID: "", quantity: 0 }],
+      components: [""],
     },
   ]);
+  const [itemOptions, setItemOptions] = useState([]);
+
+  // Fetch operations (machines) and item master (components)
+  useEffect(() => {
+    async function fetchOperations() {
+      const res = await fetch("/api/getOperations");
+      const data = await res.json();
+      setOperations(data);
+    }
+    async function fetchItems() {
+      const [itemRes, matRes] = await Promise.all([
+        fetch("/api/itemMaster"),
+        fetch("/api/getMaterials"),
+      ]);
+      const items = await itemRes.json();
+      const mats = await matRes.json();
+      setItemOptions({ items, mats });
+    }
+    fetchOperations();
+    fetchItems();
+  }, []);
 
   const addProcess = () => {
     const lastOp = processes[processes.length - 1]?.operation || 0;
@@ -24,10 +45,10 @@ export default function CreateRoutingForm() {
       ...processes,
       {
         operation: lastOp + 10,
-        workCenter: "",
         machineCode: "",
+        workCenter: "",
         machineName: "",
-        materials: [{ materialID: "", quantity: 0 }],
+        components: [""],
       },
     ]);
   };
@@ -38,15 +59,27 @@ export default function CreateRoutingForm() {
     setProcesses(updated);
   };
 
-  const handleMaterialChange = (pIndex, mIndex, field, value) => {
+  const handleMachineSelect = (index, selectedCode) => {
+    const selectedMachine = operations.find(
+      (op) => op.machine_code === selectedCode
+    );
     const updated = [...processes];
-    updated[pIndex].materials[mIndex][field] = value;
+    updated[index].machineCode = selectedCode;
+    updated[index].workCenter = selectedMachine?.work_center || "";
+    updated[index].machineName = selectedMachine?.description || "";
+    setProcesses(updated);
+  };
+
+  // Update a component_id string in the array
+  const handleMaterialChange = (pIndex, mIndex, value) => {
+    const updated = [...processes];
+    updated[pIndex].components[mIndex] = value;
     setProcesses(updated);
   };
 
   const addMaterial = (pIndex) => {
     const updated = [...processes];
-    updated[pIndex].materials.push({ materialID: "", quantity: 0 });
+    updated[pIndex].components.push("");
     setProcesses(updated);
   };
 
@@ -56,7 +89,6 @@ export default function CreateRoutingForm() {
       itemID,
       process_id: routingID,
       process_name: processName,
-      wip_code: wipCode,
       processes,
     };
 
@@ -74,7 +106,7 @@ export default function CreateRoutingForm() {
     <form onSubmit={handleSubmit} className={styles.routingContainer}>
       <div className={styles.row}>
         <div>
-          <label>Item ID</label>
+          <label>Part Number</label>
           <input
             type="text"
             value={itemID}
@@ -92,6 +124,7 @@ export default function CreateRoutingForm() {
             required
           />
         </div>
+
         <div>
           <label>Process Name</label>
           <input
@@ -101,25 +134,16 @@ export default function CreateRoutingForm() {
             required
           />
         </div>
-        <div>
-          <label>WIP Code</label>
-          <input
-            type="text"
-            value={wipCode}
-            onChange={(e) => setWipCode(e.target.value)}
-            required
-          />
-        </div>
       </div>
 
       <table className={styles.routingTable}>
         <thead>
           <tr>
             <th>Operation</th>
-            <th>Work Center</th>
             <th>Machine Code</th>
+            <th>Work Center</th>
             <th>Machine Name</th>
-            <th>Materials</th>
+            <th>Component</th>
           </tr>
         </thead>
         <tbody>
@@ -129,61 +153,53 @@ export default function CreateRoutingForm() {
                 <input type="number" value={proc.operation} readOnly />
               </td>
               <td>
-                <input
-                  type="text"
-                  value={proc.workCenter}
-                  onChange={(e) =>
-                    handleProcessChange(pIdx, "workCenter", e.target.value)
-                  }
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
+                <select
                   value={proc.machineCode}
-                  onChange={(e) =>
-                    handleProcessChange(pIdx, "machineCode", e.target.value)
-                  }
-                />
+                  onChange={(e) => handleMachineSelect(pIdx, e.target.value)}
+                >
+                  <option value="">-- Select Machine --</option>
+                  {operations.map((op) => (
+                    <option key={op._id} value={op.machine_code}>
+                      {op.machine_code}
+                    </option>
+                  ))}
+                </select>
               </td>
               <td>
-                <input
-                  type="text"
-                  value={proc.machineName}
-                  onChange={(e) =>
-                    handleProcessChange(pIdx, "machineName", e.target.value)
-                  }
-                />
+                <input type="text" value={proc.workCenter} readOnly />
               </td>
               <td>
-                {proc.materials.map((mat, mIdx) => (
+                <input type="text" value={proc.machineName} readOnly />
+              </td>
+              <td>
+                {proc.components.map((componentId, mIdx) => (
                   <div key={mIdx} className={styles.materialRow}>
-                    <input
-                      type="text"
-                      placeholder="Material ID"
-                      value={mat.materialID}
+                    <select
+                      value={componentId}
                       onChange={(e) =>
-                        handleMaterialChange(
-                          pIdx,
-                          mIdx,
-                          "materialID",
-                          e.target.value
-                        )
+                        handleMaterialChange(pIdx, mIdx, e.target.value)
                       }
-                    />
-                    <input
-                      type="number"
-                      placeholder="Qty"
-                      value={mat.quantity}
-                      onChange={(e) =>
-                        handleMaterialChange(
-                          pIdx,
-                          mIdx,
-                          "quantity",
-                          e.target.value
-                        )
-                      }
-                    />
+                    >
+                      <option value="">-- Select Component --</option>
+                      {itemOptions.items && itemOptions.items.length > 0 && (
+                        <optgroup label="Items">
+                          {itemOptions.items.map((item) => (
+                            <option key={item.item_id} value={item.item_id}>
+                              {item.item_id} {item.description ? `- ${item.description}` : ""}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {itemOptions.mats && itemOptions.mats.length > 0 && (
+                        <optgroup label="Materials">
+                          {itemOptions.mats.map((mat) => (
+                            <option key={mat.material_ID} value={mat.material_ID}>
+                              {mat.material_ID} {mat.description ? `- ${mat.description}` : ""}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
                   </div>
                 ))}
                 <button

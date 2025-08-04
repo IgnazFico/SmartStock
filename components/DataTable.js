@@ -1,14 +1,19 @@
 import React from "react";
 import styles from "./DataTable.module.css";
 
+
 const DataTable = ({ data, columns }) => {
+  // Support both array of strings and array of {key, label}
+  const isObjectColumns = columns.length && typeof columns[0] === "object" && columns[0] !== null;
   return (
     <div className={styles.tableContainer}>
       <table className={styles.dataTable}>
         <thead>
           <tr>
             {columns.map((col) => (
-              <th key={col}>{col}</th>
+              <th key={isObjectColumns ? col.key : col}>
+                {isObjectColumns ? col.label : col}
+              </th>
             ))}
           </tr>
         </thead>
@@ -16,7 +21,9 @@ const DataTable = ({ data, columns }) => {
           {data.map((row, index) => (
             <tr key={index}>
               {columns.map((col) => (
-                <td key={col}>{row[col]}</td>
+                <td key={isObjectColumns ? col.key : col}>
+                  {row[isObjectColumns ? col.key : col]}
+                </td>
               ))}
             </tr>
           ))}

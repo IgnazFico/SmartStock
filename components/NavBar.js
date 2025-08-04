@@ -158,16 +158,16 @@ export default function NavBar() {
               {isMasterDataOpen && (
                 <ul className={styles.dropdownMenu}>
                   <li>
-                    <a href="/view-bom">BoM</a>
+                    <a href="/master_data/view-bom">BoM</a>
                   </li>
                   <li>
-                    <a href="/view-routing">Routing</a>
+                    <a href="/master_data/view-routing">Routing</a>
                   </li>
                   <li>
-                    <a href="/warhouse-master">Warehousing</a>
+                    <a href="/master_data/warehouse">Warehousing</a>
                   </li>
                   <li>
-                    <a href="/item-master">Items</a>
+                    <a href="/master_data/item">Items</a>
                   </li>
                 </ul>
               )}

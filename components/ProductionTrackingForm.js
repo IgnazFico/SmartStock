@@ -21,7 +21,9 @@ export default function ProductionTrackingForm({ prodOrderId }) {
         setItemId(order.item_id);
         setOrderStatus(order.status || "Released");
 
-        const stepRes = await fetch(`/api/process?item_id=${order.item_id}`);
+        const stepRes = await fetch(
+          `/api/process?process_id=${order.process_id}`
+        );
         const steps = await stepRes.json();
         setProcessSteps(steps);
 
