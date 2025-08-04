@@ -17,7 +17,7 @@ export default function InsertMasterData() {
   const [isLocatorModalOpen, setLocatorModalOpen] = useState(false);
   const [isWarehouseModalOpen, setWarehouseModalOpen] = useState(false);
 
-  const locatorColumns = ["locator", "warehouse"];
+  const locatorColumns = ["locator", "category"];
   const warehouseColumns = ["warehouse_ID", "warehouse"];
 
   useEffect(() => {

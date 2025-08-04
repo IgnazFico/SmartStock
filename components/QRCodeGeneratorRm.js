@@ -11,14 +11,14 @@ import styles from "./QRCodeGeneratorRm.module.css";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-  const QRCodeGenerator = () => {
+const QRCodeGenerator = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   const [workerBarcode, setWorkerBarcode] = useState("");
   const [isWorkerValid, setIsWorkerValid] = useState(false);
   const [rm_ID, setrm_ID] = useState("");
-  const [warehouse_ID] = useState("wh_rm");   
+  const [warehouse_ID] = useState("wh_rm");
   const [part_number, setpart_number] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [po_ID, setpo_ID] = useState("");
@@ -34,8 +34,11 @@ import { useRouter } from "next/navigation";
     if (status === "loading") return;
 
     const user = session?.user;
-    if (!user || !["logistics"].includes(user.department?.toLowerCase()) &&
-      !["admin", "super"].includes(user.role)) {
+    if (
+      !user ||
+      (!["logistics"].includes(user.department?.toLowerCase()) &&
+        !["admin", "super"].includes(user.role))
+    ) {
       router.push("/unauthorized");
     }
   }, [session, status, router]);
@@ -77,7 +80,11 @@ import { useRouter } from "next/navigation";
         });
         const data = await response.json();
         setIsWorkerValid(data.valid);
-        setError(data.valid ? "" : "Invalid worker barcode. Please enter a valid barcode.");
+        setError(
+          data.valid
+            ? ""
+            : "Invalid worker barcode. Please enter a valid barcode."
+        );
       } catch {
         setError("An error occurred during validation.");
       }
@@ -102,7 +109,9 @@ import { useRouter } from "next/navigation";
   const fetchSuggestions = useCallback(
     debounce(async (inputValue) => {
       try {
-        const res = await fetch(`/api/items?partNumber=${encodeURIComponent(inputValue)}`);
+        const res = await fetch(
+          `/api/items?partNumber=${encodeURIComponent(inputValue)}`
+        );
         const data = await res.json();
         setSuggestions(data);
         setIsSuggestionsVisible(true);
@@ -119,9 +128,14 @@ import { useRouter } from "next/navigation";
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "ArrowDown") setActiveSuggestionIndex((prev) => Math.min(prev + 1, suggestions.length - 1));
-    else if (e.key === "ArrowUp") setActiveSuggestionIndex((prev) => Math.max(prev - 1, 0));
-    else if (e.key === "Enter" && activeSuggestionIndex >= 0) selectSuggestion(activeSuggestionIndex);
+    if (e.key === "ArrowDown")
+      setActiveSuggestionIndex((prev) =>
+        Math.min(prev + 1, suggestions.length - 1)
+      );
+    else if (e.key === "ArrowUp")
+      setActiveSuggestionIndex((prev) => Math.max(prev - 1, 0));
+    else if (e.key === "Enter" && activeSuggestionIndex >= 0)
+      selectSuggestion(activeSuggestionIndex);
   };
 
   const selectSuggestion = (index) => {
@@ -135,19 +149,35 @@ import { useRouter } from "next/navigation";
     if (!text || !match) return text;
     const regex = new RegExp(`(${match})`, "i");
     return text.split(regex).map((part, i) =>
-      regex.test(part) ? <span key={i} className={styles.match}>{part}</span> : part
+      regex.test(part) ? (
+        <span key={i} className={styles.match}>
+          {part}
+        </span>
+      ) : (
+        part
+      )
     );
   };
 
   const validateInputs = () => {
-    if (isNaN(quantity) || quantity <= 0) return setError("Quantity must be a positive number."), false;
-    if (isNaN(copy) || copy <= 0) return setError("Copy must be a positive number."), false;
+    if (isNaN(quantity) || quantity <= 0)
+      return setError("Quantity must be a positive number."), false;
+    if (isNaN(copy) || copy <= 0)
+      return setError("Copy must be a positive number."), false;
     setError("");
     return true;
   };
 
   const canPrint = () => {
-    return isWorkerValid && rm_ID && warehouse_ID && part_number && po_ID && quantity > 0 && copy > 0;
+    return (
+      isWorkerValid &&
+      rm_ID &&
+      warehouse_ID &&
+      part_number &&
+      po_ID &&
+      quantity > 0 &&
+      copy > 0
+    );
   };
 
   const trackUsedPO = async () => {
@@ -155,7 +185,11 @@ import { useRouter } from "next/navigation";
       await fetch("/api/barcode/track-used", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ po_ID, type: "raw_material", used_at: new Date() }),
+        body: JSON.stringify({
+          po_ID,
+          type: "raw_material",
+          used_at: new Date(),
+        }),
       });
       const res = await fetch("/api/barcode/available-pos");
       const data = await res.json();
@@ -171,7 +205,9 @@ import { useRouter } from "next/navigation";
   const handlePrint = () => {
     if (!validateInputs()) return;
     const printWindow = window.open("", "_blank");
-    printWindow.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Print</title><style>html, body { width: 80mm; height: 80mm; margin: 0; font-family: Arial; } #print-root { width: 100%; height: 100%; }</style></head><body><div id='print-root'></div></body></html>`);
+    printWindow.document.write(
+      `<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Print</title><style>html, body { width: 80mm; height: 80mm; margin: 0; font-family: Arial; } #print-root { width: 100%; height: 100%; }</style></head><body><div id='print-root'></div></body></html>`
+    );
     printWindow.document.close();
 
     const printRoot = printWindow.document.getElementById("print-root");
@@ -180,7 +216,15 @@ import { useRouter } from "next/navigation";
     const templates = Array.from({ length: copy }, (_, i) => (
       <QRCodeTemplate
         key={i}
-        qrData={[rm_ID, warehouse_ID, part_number, quantity, po_ID, generateUniqueId(), workerBarcode].join("|")}
+        qrData={[
+          rm_ID,
+          warehouse_ID,
+          part_number,
+          quantity,
+          po_ID,
+          generateUniqueId(),
+          workerBarcode,
+        ].join("|")}
       />
     ));
 
@@ -196,7 +240,15 @@ import { useRouter } from "next/navigation";
     const templates = Array.from({ length: copy }, (_, i) => (
       <QRCodeTemplateA4
         key={i}
-        qrData={[rm_ID, warehouse_ID, part_number, quantity, po_ID, generateUniqueId(), workerBarcode].join("|")}
+        qrData={[
+          rm_ID,
+          warehouse_ID,
+          part_number,
+          quantity,
+          po_ID,
+          generateUniqueId(),
+          workerBarcode,
+        ].join("|")}
       />
     ));
 
@@ -220,15 +272,33 @@ import { useRouter } from "next/navigation";
     <div className={styles.container}>
       <div className={styles.formGroup}>
         <label className={styles.label}>Worker Barcode:</label>
-        <input type="text" value={workerBarcode} onChange={handleWorkerBarcodeChange} className={styles.input} />
+        <input
+          type="text"
+          value={workerBarcode}
+          onChange={handleWorkerBarcodeChange}
+          className={styles.input}
+        />
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>RM ID:</label>
-        <input type="text" value={rm_ID} className={styles.input} readOnly disabled />
+        <input
+          type="text"
+          value={rm_ID}
+          className={styles.input}
+          readOnly
+          disabled
+        />
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Part Number:</label>
-        <input type="text" value={part_number} onChange={handlepart_numberChange} onKeyDown={handleKeyDown} className={styles.input} disabled />
+        <input
+          type="text"
+          value={part_number}
+          onChange={handlepart_numberChange}
+          onKeyDown={handleKeyDown}
+          className={styles.input}
+          disabled
+        />
         {suggestions.length > 0 && isSuggestionsVisible && (
           <ul className={styles.suggestionsList} role="listbox">
             {suggestions.map((item, index) => (
@@ -236,10 +306,15 @@ import { useRouter } from "next/navigation";
                 key={index}
                 role="option"
                 aria-selected={index === activeSuggestionIndex}
-                className={`${styles.suggestionItem} ${index === activeSuggestionIndex ? styles.active : ""}`}
+                className={`${styles.suggestionItem} ${
+                  index === activeSuggestionIndex ? styles.active : ""
+                }`}
                 onClick={() => selectSuggestion(index)}
               >
-                {highlightMatch(item.part_number || "Not Found", part_number || "")}
+                {highlightMatch(
+                  item.part_number || "Not Found",
+                  part_number || ""
+                )}
               </li>
             ))}
           </ul>
@@ -247,7 +322,14 @@ import { useRouter } from "next/navigation";
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Quantity:</label>
-        <input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min="1" className={styles.input} disabled />
+        <input
+          type="number"
+          value={quantity}
+          onChange={(e) => setQuantity(Number(e.target.value))}
+          min="1"
+          className={styles.input}
+          disabled
+        />
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Purchase Order:</label>
@@ -265,14 +347,26 @@ import { useRouter } from "next/navigation";
           }}
         />
       </div>
-      <div className={styles.formGroup}>
+      {/* <div className={styles.formGroup}>
         <label className={styles.label}>Copy:</label>
         <input type="number" value={copy} onChange={(e) => setCopy(Number(e.target.value))} min="1" className={styles.input} disabled={!isWorkerValid} />
-      </div>
+      </div> */}
       {error && <p className={styles.error}>{error}</p>}
       <div className={styles.buttonGroup}>
-        <button onClick={handlePrint} className={styles.button} disabled={!canPrint()}>Print QR Codes</button>
-        <button onClick={handlePrintA4} className={styles.button} disabled={!canPrint()}>Print on A4</button>
+        <button
+          onClick={handlePrint}
+          className={styles.button}
+          disabled={!canPrint()}
+        >
+          Print QR Codes
+        </button>
+        <button
+          onClick={handlePrintA4}
+          className={styles.button}
+          disabled={!canPrint()}
+        >
+          Print on A4
+        </button>
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ import styles from "./QRCodeGeneratorPrd.module.css";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-  const QRCodeGenerator = () => {
+const QRCodeGenerator = () => {
   const { data: session, status } = useSession(); // 🟢 Harus di sini
   const router = useRouter();
 
@@ -25,7 +25,7 @@ import { useRouter } from "next/navigation";
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
   const [prodOptions, setProdOptions] = useState([]);
-   // ⛔ Blokir user yang tidak berasal dari Logistics atau tidak admin/super
+  // ⛔ Blokir user yang tidak berasal dari Logistics atau tidak admin/super
   useEffect(() => {
     if (status === "loading") return;
 
@@ -42,8 +42,8 @@ import { useRouter } from "next/navigation";
   useEffect(() => {
     if (isWorkerValid) {
       fetch("/api/generateWipId")
-        .then(res => res.json())
-        .then(data => setWipId(data.wipId))
+        .then((res) => res.json())
+        .then((data) => setWipId(data.wipId))
         .catch(() => setWipId(""));
     } else {
       setWipId("");
@@ -64,7 +64,7 @@ import { useRouter } from "next/navigation";
     value: item.prod_order_id,
     label: item.prod_order_id,
     partNumber: item.material_ID,
-    quantity: item.quantity
+    quantity: item.quantity,
   }));
 
   const validateWorkerBarcode = useCallback(
@@ -99,7 +99,9 @@ import { useRouter } from "next/navigation";
   const fetchSuggestions = useCallback(
     debounce(async (inputValue) => {
       try {
-        const response = await fetch(`/api/items?partNumber=${encodeURIComponent(inputValue)}`);
+        const response = await fetch(
+          `/api/items?partNumber=${encodeURIComponent(inputValue)}`
+        );
         const data = await response.json();
         setSuggestions(data);
         setIsSuggestionsVisible(true);
@@ -117,7 +119,9 @@ import { useRouter } from "next/navigation";
 
   const handleKeyDown = (e) => {
     if (e.key === "ArrowDown") {
-      setActiveSuggestionIndex((prev) => Math.min(prev + 1, suggestions.length - 1));
+      setActiveSuggestionIndex((prev) =>
+        Math.min(prev + 1, suggestions.length - 1)
+      );
     } else if (e.key === "ArrowUp") {
       setActiveSuggestionIndex((prev) => Math.max(prev - 1, 0));
     } else if (e.key === "Enter" && activeSuggestionIndex >= 0) {
@@ -137,8 +141,13 @@ import { useRouter } from "next/navigation";
     const regex = new RegExp(`(${match})`, "i");
     const parts = text.split(regex);
     return parts.map((part, i) =>
-      regex.test(part) ? <span key={i} 
-      className={styles.match}>{part}</span> : part
+      regex.test(part) ? (
+        <span key={i} className={styles.match}>
+          {part}
+        </span>
+      ) : (
+        part
+      )
     );
   };
 
@@ -152,10 +161,19 @@ import { useRouter } from "next/navigation";
   };
 
   const canPrint = () => {
-    return isWorkerValid && WipId && prodOrderId && warehouse_Id && partNumber && quantity > 0 && copy > 0;
+    return (
+      isWorkerValid &&
+      WipId &&
+      prodOrderId &&
+      warehouse_Id &&
+      partNumber &&
+      quantity > 0 &&
+      copy > 0
+    );
   };
 
-  const generateUniqueId = () => `${Date.now()}${Math.floor(Math.random() * 10000)}`;
+  const generateUniqueId = () =>
+    `${Date.now()}${Math.floor(Math.random() * 10000)}`;
 
   const handlePrint = () => {
     if (!validateInputs()) return;
@@ -171,14 +189,15 @@ import { useRouter } from "next/navigation";
 
     const root = createRoot(printWindow.document.getElementById("print-root"));
     const templates = Array.from({ length: copy }, (_, i) => (
-      <QRCodeTemplate 
-        key={i} 
-        wipId={WipId} 
-        poNumber={prodOrderId} 
-        partNumber={partNumber} 
-        quantity={quantity} 
-        uniqueId={generateUniqueId()} 
-        workerBarcode={workerBarcode} />
+      <QRCodeTemplate
+        key={i}
+        wipId={WipId}
+        poNumber={prodOrderId}
+        partNumber={partNumber}
+        quantity={quantity}
+        uniqueId={generateUniqueId()}
+        workerBarcode={workerBarcode}
+      />
     ));
 
     root.render(<>{templates}</>);
@@ -192,7 +211,7 @@ import { useRouter } from "next/navigation";
       body: JSON.stringify({
         prod_order_id: prodOrderId,
         type: "production",
-        used_at: new Date()
+        used_at: new Date(),
       }),
     });
   };
@@ -216,14 +235,15 @@ import { useRouter } from "next/navigation";
 
     const root = createRoot(printWindow.document.getElementById("print-root"));
     const templates = Array.from({ length: copy }, (_, i) => (
-      <QRCodeTemplateA4 
-        key={i} 
-        wipId={WipId} 
-        poNumber={prodOrderId} 
-        partNumber={partNumber} 
-        quantity={quantity} 
-        uniqueId={generateUniqueId()} 
-        workerBarcode={workerBarcode} />
+      <QRCodeTemplateA4
+        key={i}
+        wipId={WipId}
+        poNumber={prodOrderId}
+        partNumber={partNumber}
+        quantity={quantity}
+        uniqueId={generateUniqueId()}
+        workerBarcode={workerBarcode}
+      />
     ));
 
     root.render(<>{templates}</>);
@@ -237,7 +257,7 @@ import { useRouter } from "next/navigation";
       body: JSON.stringify({
         prod_order_id: prodOrderId,
         type: "production",
-        used_at: new Date()
+        used_at: new Date(),
       }),
     });
   };
@@ -246,19 +266,22 @@ import { useRouter } from "next/navigation";
     <div className={styles.container}>
       <div className={styles.formGroup}>
         <label className={styles.label}>Worker Barcode:</label>
-        <input 
-        type="text" 
-        value={workerBarcode} 
-        onChange={handleWorkerBarcodeChange} 
-        className={styles.input} />
+        <input
+          type="text"
+          value={workerBarcode}
+          onChange={handleWorkerBarcodeChange}
+          className={styles.input}
+        />
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>WIP ID:</label>
-        <input 
-        type="text" 
-        value={WipId} 
-        className={styles.input} 
-        readOnly disabled />
+        <input
+          type="text"
+          value={WipId}
+          className={styles.input}
+          readOnly
+          disabled
+        />
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Production Order:</label>
@@ -266,7 +289,7 @@ import { useRouter } from "next/navigation";
           options={prodOptionsMapped}
           placeholder="SELECT PRODUCTION ORDER"
           isDisabled={!isWorkerValid}
-          value={prodOptionsMapped.find(opt => opt.value === prodOrderId)}
+          value={prodOptionsMapped.find((opt) => opt.value === prodOrderId)}
           onChange={(selected) => {
             if (selected) {
               setProdOrderId(selected.value);
@@ -278,18 +301,23 @@ import { useRouter } from "next/navigation";
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Part Number:</label>
-        <input 
-          type="text" 
-          value={partNumber} 
-          onChange={handlePartNumberChange} 
-          onKeyDown={handleKeyDown} 
-          className={styles.input} 
-          readonly disabled />
+        <input
+          type="text"
+          value={partNumber}
+          onChange={handlePartNumberChange}
+          onKeyDown={handleKeyDown}
+          className={styles.input}
+          readonly
+          disabled
+        />
         {suggestions.length > 0 && isSuggestionsVisible && (
           <ul className={styles.suggestionsList}>
             {suggestions.map((item, index) => (
-              <li key={index} onClick={() => selectSuggestion(index)} 
-              className={index === activeSuggestionIndex ? styles.active : ""}>
+              <li
+                key={index}
+                onClick={() => selectSuggestion(index)}
+                className={index === activeSuggestionIndex ? styles.active : ""}
+              >
                 {highlightMatch(item.part_number || "", partNumber)}
               </li>
             ))}
@@ -298,25 +326,29 @@ import { useRouter } from "next/navigation";
       </div>
       <div className={styles.formGroup}>
         <label className={styles.label}>Quantity:</label>
-          <input 
-            type="number" 
-            value={quantity} 
-            onChange={(e) => setQuantity(Number(e.target.value))} 
-            className={styles.input} min="1" 
-            readonly disabled />
+        <input
+          type="number"
+          value={quantity}
+          onChange={(e) => setQuantity(Number(e.target.value))}
+          className={styles.input}
+          min="1"
+          readonly
+          disabled
+        />
       </div>
       {/* Warehouse ID */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Warehouse ID:</label>
-              <input
-                type="text"
-                value={warehouse_Id}
-                onChange={(e) => setWarehouse_Id(e.target.value)}
-                className={styles.input}
-                readOnly disabled
-              />
-            </div>
       <div className={styles.formGroup}>
+        <label className={styles.label}>Warehouse ID:</label>
+        <input
+          type="text"
+          value={warehouse_Id}
+          onChange={(e) => setWarehouse_Id(e.target.value)}
+          className={styles.input}
+          readOnly
+          disabled
+        />
+      </div>
+      {/* <div className={styles.formGroup}>
         <label className={styles.label}>Copy:</label>
         <input 
           type="number" 
@@ -324,11 +356,23 @@ import { useRouter } from "next/navigation";
           onChange={(e) => setCopy(Number(e.target.value))} 
           className={styles.input} min="1" 
           disabled={!isWorkerValid} />
-      </div>
+      </div> */}
       {error && <p className={styles.error}>{error}</p>}
       <div className={styles.buttonGroup}>
-        <button onClick={handlePrint} className={styles.button} disabled={!canPrint()}>Print QR Codes</button>
-        <button onClick={handlePrintA4} className={styles.button} disabled={!canPrint()}>Print on A4</button>
+        <button
+          onClick={handlePrint}
+          className={styles.button}
+          disabled={!canPrint()}
+        >
+          Print QR Codes
+        </button>
+        <button
+          onClick={handlePrintA4}
+          className={styles.button}
+          disabled={!canPrint()}
+        >
+          Print on A4
+        </button>
       </div>
     </div>
   );

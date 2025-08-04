@@ -31,31 +31,19 @@ export default function Dashboard() {
         <div className={styles.card}>
           <h2>Admin Dashboard</h2>
           <p>You have access to administrative functions and analytics.</p>
-          <div className={styles.chartWrapper}>
-            <StockLevelChart />
-          </div>
         </div>
       )}
 
-      {session.user.role === "normal" && (
+      {session.user.role === "user" && (
         <div className={styles.card}>
           <h2>User Dashboard</h2>
           <p>You have access to operational insights and materials data.</p>
-          <div className={styles.chartWrapper}>
-            <StockLevelChart />
-          </div>
         </div>
       )}
-      
-      {session.user.role === "super" && (
-        <div className={styles.card}>
-          <h2>Super Admin Dashboard</h2>
-          <p>You have access to all system features and analytics.</p>
-          <div className={styles.chartWrapper}>
-            <StockLevelChart />
-          </div>
-        </div>
-      )}
+
+      <div className={styles.chartWrapper}>
+        <StockLevelChart />
+      </div>
     </div>
   );
 }

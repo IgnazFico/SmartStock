@@ -16,28 +16,6 @@ const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const recordsPerPage = 10;
   const { data: session } = useSession();
-  const [isSupplierModalOpen, setSupplierModalOpen] = useState(false);
-  const [supplierLoading, setSupplierLoading] = useState(false);
-  const [supplierError, setSupplierError] = useState(null);
-  // Add new supplier
-  const handleAddSupplier = async (formData) => {
-    setSupplierLoading(true);
-    setSupplierError(null);
-    try {
-      const res = await fetch("/api/insertSupplier", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!res.ok) throw new Error("Failed to insert supplier");
-      setSupplierModalOpen(false);
-      alert("Supplier added!");
-    } catch (err) {
-      setSupplierError(err.message);
-    } finally {
-      setSupplierLoading(false);
-    }
-  };
 
   /** Filter by PO ID or Supplier ID */
   const filteredRecords = Array.isArray(records)
@@ -184,22 +162,7 @@ const PurchaseOrderTable = ({ records = [], onAddNewPO }) => {
               <button className={styles.newPOButton} onClick={onAddNewPO}>
                 + New PO
               </button>
-              <button
-                className={styles.newPOButton}
-                onClick={() => setSupplierModalOpen(true)}
-              >
-                Add Supplier
-              </button>
-
-              <DataModal
-                isOpen={isSupplierModalOpen}
-                onClose={() => setSupplierModalOpen(false)}
-                onSubmit={handleAddSupplier}
-                fields={["supplier_ID", "supplier", "phone", "address"]}
-                loading={supplierLoading}
-                error={supplierError}
-                title="Add New Supplier"
-              />
+              
             </div>
           )}
         </div>

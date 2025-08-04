@@ -18,8 +18,16 @@ export default function StockLevelChart() {
 
   const maxQty = Math.max(...data.map((item) => item.quantity), 1); // prevent divide-by-zero
 
-  const lowStockItems = data.filter(
+  // Critical: below threshold, Warning: equal or near (within 10%)
+  const criticalItems = data.filter(
     (item) => item.threshold !== undefined && item.quantity < item.threshold
+  );
+  const warningItems = data.filter(
+    (item) => {
+      if (item.threshold === undefined) return false;
+      const near = item.quantity >= item.threshold && item.quantity <= item.threshold + Math.max(1, Math.round(item.threshold * 0.1));
+      return near;
+    }
   );
 
   return (
@@ -52,19 +60,40 @@ export default function StockLevelChart() {
 
       {/* Right: Notification Section */}
       <div className={styles.rightPanel}>
-        {lowStockItems.length > 0 && (
-          <div className={styles.notificationBox}>
-            <h3 className={styles.notificationTitle}>⚠️ Low Stock Alerts</h3>
+        {criticalItems.length > 0 && (
+          <div className={styles.notificationBox} style={{ background: '#ffeaea', border: '1.5px solid #e63946' }}>
+            <h3 className={styles.notificationTitle} style={{ color: '#e63946' }}>🛑 Critical Stock Alert</h3>
             <ul className={styles.alertList}>
-              {lowStockItems.map((item, idx) => (
+              {criticalItems.map((item, idx) => (
                 <li key={idx} className={styles.alertItem}>
                   <strong>{item.part_number}</strong> is below threshold.
                   Current: {item.quantity}, Threshold: {item.threshold}
                   <button
                     className={styles.requestBtn}
+                    style={{ background: '#e63946', color: '#fff', border: 'none' }}
+                    onClick={() => router.push("/po")}
+                  >
+                    Create PO
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {warningItems.length > 0 && (
+          <div className={styles.notificationBox} style={{ background: '#fff8e1', border: '1.5px solid #f1c40f', marginTop: criticalItems.length > 0 ? 16 : 0 }}>
+            <h3 className={styles.notificationTitle} style={{ color: '#f1c40f' }}>⚠️ Low Stock Warning</h3>
+            <ul className={styles.alertList}>
+              {warningItems.map((item, idx) => (
+                <li key={idx} className={styles.alertItem}>
+                  <strong>{item.part_number}</strong> is at or near threshold.
+                  Current: {item.quantity}, Threshold: {item.threshold}
+                  <button
+                    className={styles.requestBtn}
+                    style={{ background: '#f1c40f', color: '#333', border: 'none' }}
                     onClick={() => router.push("/pr")}
                   >
-                    Request
+                    Create PR
                   </button>
                 </li>
               ))}

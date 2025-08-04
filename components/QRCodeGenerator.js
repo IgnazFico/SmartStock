@@ -24,7 +24,7 @@ const QRCodeGenerator = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
-   // ⛔ Blokir user yang tidak berasal dari Logistics atau tidak admin/super
+  // ⛔ Blokir user yang tidak berasal dari Logistics atau tidak admin/super
   useEffect(() => {
     if (status === "loading") return;
 
@@ -64,12 +64,12 @@ const QRCodeGenerator = () => {
         .catch(() => setProdOptions([]));
     }
   }, [isWorkerValid]);
- // Fetch Production Order list (only unused)
+  // Fetch Production Order list (only unused)
   const prodOptionsMapped = prodOptions.map((item) => ({
     value: item.prod_order_id,
     label: item.prod_order_id,
     partNumber: item.material_ID,
-    quantity: item.quantity
+    quantity: item.quantity,
   }));
 
   // Validate worker barcode
@@ -262,7 +262,7 @@ const QRCodeGenerator = () => {
       body: JSON.stringify({
         prod_order_id: prodOrderId,
         type: "finish_good",
-        used_at: new Date()
+        used_at: new Date(),
       }),
     });
   };
@@ -329,15 +329,15 @@ const QRCodeGenerator = () => {
     root.render(<>{templates}</>);
     printWindow.focus();
     printWindow.print();
-  
-      // ✅ Track production order usage
+
+    // ✅ Track production order usage
     fetch("/api/barcode/track-used", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         prod_order_id: prodOrderId,
         type: "finish_good",
-        used_at: new Date()
+        used_at: new Date(),
       }),
     });
   };
@@ -365,13 +365,13 @@ const QRCodeGenerator = () => {
           disabled
         />
       </div>
-<div className={styles.formGroup}>
+      <div className={styles.formGroup}>
         <label className={styles.label}>Production Order:</label>
         <Select
           options={prodOptionsMapped}
           placeholder="SELECT PRODUCTION ORDER"
           isDisabled={!isWorkerValid}
-          value={prodOptionsMapped.find(opt => opt.value === prodOrderId)}
+          value={prodOptionsMapped.find((opt) => opt.value === prodOrderId)}
           onChange={(selected) => {
             if (selected) {
               setProdOrderId(selected.value);
@@ -390,7 +390,8 @@ const QRCodeGenerator = () => {
           onChange={handlePartNumberChange}
           onKeyDown={handleKeyDown}
           className={styles.input}
-          readOnly disabled
+          readOnly
+          disabled
         />
         {suggestions.length > 0 && isSuggestionsVisible && (
           <ul className={styles.suggestionsList} role="listbox">
@@ -422,7 +423,8 @@ const QRCodeGenerator = () => {
           onChange={(e) => setQuantity(Number(e.target.value))}
           min="1"
           className={styles.input}
-          readOnly disabled
+          readOnly
+          disabled
         />
       </div>
       {/* Warehouse ID */}
@@ -433,11 +435,12 @@ const QRCodeGenerator = () => {
           value={warehouse_Id}
           onChange={(e) => setWarehouse_Id(e.target.value)}
           className={styles.input}
-          readOnly disabled
+          readOnly
+          disabled
         />
       </div>
       {/* Copy */}
-      <div className={styles.formGroup}>
+      {/* <div className={styles.formGroup}>
         <label className={styles.label}>Copy:</label>
         <input
           type="number"
@@ -447,7 +450,7 @@ const QRCodeGenerator = () => {
           className={styles.input}
           disabled={!isWorkerValid}
         />
-      </div>
+      </div> */}
       {/* Error */}
       {error && <p className={styles.error}>{error}</p>}
       {/* Print Buttons */}

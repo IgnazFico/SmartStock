@@ -29,7 +29,8 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  color: rgb(157, 157, 157);
+  color: rgb(255, 255, 255);
+  background-color: red;
   border: none;
   border-radius: 4px;
   width: 30px;
@@ -66,7 +67,7 @@
 /* Submit Button */
 .submit {
   padding: 10px;
-  background-color: #4caf50;
+  background-color: #074d6f;
   color: white;
   border: none;
   border-radius: 4px;
@@ -76,7 +77,7 @@
 }
 
 .submit:hover {
-  background-color: #45a049;
+  background-color: #085175;
 }
 
 /* Animation for Modal */

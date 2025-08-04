@@ -169,6 +169,9 @@ export default function NavBar() {
                   <li>
                     <a href="/master_data/item">Items</a>
                   </li>
+                  <li>
+                    <a href="/master_data/supplier">Supplier</a>
+                  </li>
                 </ul>
               )}
             </li>

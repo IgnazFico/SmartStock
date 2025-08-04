@@ -44,7 +44,10 @@ export async function GET(req) {
         return res[0]?.totalQty || 0;
       };
 
-      const qtyInventory = await sumInventory("inv_finish_good", "part_number");
+      const qtyInventory = await sumInventory(
+        "inv_wip_production",
+        "part_number"
+      );
       const qtyRM = await sumInventory("inv_raw_material", "part_number");
 
       result.push({
@@ -53,7 +56,7 @@ export async function GET(req) {
         unit,
         available_qty: qtyInventory + qtyRM,
         sources: {
-          inv_finish_good: qtyInventory,
+          inv_wip_production: qtyInventory,
           inv_raw_material: qtyRM,
         },
       });
