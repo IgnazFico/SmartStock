@@ -5,6 +5,7 @@ import styles from "./CreateBOMForm.module.css"; // Import module CSS
 
 export default function CreateBOMForm() {
   const [mainItem, setMainItem] = useState("");
+  const [mainItemOptions, setMainItemOptions] = useState([]);
   const [components, setComponents] = useState([
     { item: "", quantity: "", unit: "", subcomponents: [] },
   ]);
@@ -19,7 +20,14 @@ export default function CreateBOMForm() {
       ]);
       const items = await itemRes.json();
       const mats = await matRes.json();
-      // Merge and deduplicate by id
+      // For main item selection (only items)
+      setMainItemOptions(
+        items.map((i) => ({
+          value: i.item_id,
+          label: i.item_id + (i.description ? ` - ${i.description}` : ""),
+        }))
+      );
+      // For component selection (items and materials)
       const all = [
         ...items.map((i) => ({
           value: i.item_id,
@@ -158,28 +166,32 @@ export default function CreateBOMForm() {
             onChange={(e) => updateComponent("unit", e.target.value)}
             className={styles.inputField}
           />
-          {/* Remove button for component or subcomponent */}
-          {isRoot && components.length > 1 ? (
-            <button
-              type="button"
-              className={styles.removeButton}
-              onClick={() => removeComponent(path[0])}
-              title="Remove Component"
-            >
-              &minus;
+          <div className={styles.buttonGroup}>
+            <button type="button" className={styles.addSub} onClick={addSub}>
+              + Add Subcomponent
             </button>
-          ) : !isRoot ? (
-            <button
-              type="button"
-              className={styles.removeButton}
-              onClick={() =>
-                parentSetter((prev) => removeSubcomponentAtPath(prev, path))
-              }
-              title="Remove Subcomponent"
-            >
-              &minus;
-            </button>
-          ) : null}
+            {isRoot && components.length > 1 ? (
+              <button
+                type="button"
+                className={styles.removeButton}
+                onClick={() => removeComponent(path[0])}
+                title="Remove Component"
+              >
+                &minus;
+              </button>
+            ) : !isRoot ? (
+              <button
+                type="button"
+                className={styles.removeButton}
+                onClick={() =>
+                  parentSetter((prev) => removeSubcomponentAtPath(prev, path))
+                }
+                title="Remove Subcomponent"
+              >
+                &minus;
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {/* Render Subcomponents recursively */}
@@ -190,10 +202,6 @@ export default function CreateBOMForm() {
             )}
           </div>
         )}
-
-        <button type="button" className={styles.addSub} onClick={addSub}>
-          + Add Subcomponent
-        </button>
       </div>
     );
   };
@@ -216,13 +224,19 @@ export default function CreateBOMForm() {
     <form onSubmit={handleSubmit} className={styles.formContainer}>
       <div>
         <label className={styles.label}>Main Item</label>
-        <input
-          type="text"
+        <select
           value={mainItem}
           onChange={(e) => setMainItem(e.target.value)}
           className={styles.inputField}
           required
-        />
+        >
+          <option value="">-- Select Main Item --</option>
+          {mainItemOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <h2 className={styles.sectionTitle}>Component Items</h2>
