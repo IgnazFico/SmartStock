@@ -12,3 +12,4 @@ export default function CustomAlert({ message, type = "info", onClose }) {
     </div>
   );
 }
+  

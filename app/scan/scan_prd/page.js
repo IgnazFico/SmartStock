@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import ScanTable from "../../../components/ScanTablePrd";
+import CustomAlert from "../../../components/CustomAlert"; 
 import styles from "./styles.module.css";
 
 export default function Scan() {
@@ -14,6 +15,7 @@ export default function Scan() {
   const [isLocatorValid, setIsLocatorValid] = useState(false);
   const [scanResult, setScanResult] = useState("");
   const [scanRecordsPrd, setScanRecordsPrd] = useState([]);
+  const [alertMessage, setAlertMessage] = useState("");
   const debounceTimeoutRef = useRef(null);
 
   const { data: session, status } = useSession();
@@ -155,6 +157,7 @@ export default function Scan() {
 
       const [WipID, poNumber, partNumber, quantity, uniqueId, workerBarcodeQR] =
         scannedData.split("|");
+
       if (
         WipID &&
         poNumber &&
@@ -163,15 +166,16 @@ export default function Scan() {
         uniqueId &&
         workerBarcodeQR
       ) {
-         // CEK DUPLIKAT RM_ID
-      const alreadyScanned = scanRecordsPrd.some(
+        // ✅ cek duplicate WIP ID
+        const alreadyScanned = scanRecordsPrd.some(
           (rec) => rec.wip_ID === WipID
         );
         if (alreadyScanned) {
-          setError("This WIP ID has already been scanned in.");
+          setAlertMessage(`WIP ID ${WipID} has already been scanned in.`); // ✅ pakai CustomAlert
           return;
         }
-         setError("");           
+
+        setError("");           
         const newRecord = {
           id: uniqueId,
           wip_ID: WipID,
@@ -185,6 +189,7 @@ export default function Scan() {
         };
         setScanRecordsPrd((prevRecords) => [newRecord, ...prevRecords]);
       }
+
       event.target.value = "";
       if (qrInputRef.current) qrInputRef.current.value = "";
     }, 300);
@@ -330,6 +335,16 @@ export default function Scan() {
           </button>
           {error && <p className={styles.error}>{error}</p>}
         </div>
+              {/* ✅ Custom Alert modal */}
+      <CustomAlert
+        message={alertMessage}
+        type="error"
+        onClose={() => setAlertMessage("")}
+      />
+
+      <div style={{ display: "flex", flexDirection: "row", gap: "50px" }}>
+        {/* input form tetap sama */}
+      </div>
       </div>
       <ScanTable scanRecordsPrd={scanRecordsPrd} />
     </div>

@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import ScanTable from "../../../components/ScanTable";
+import CustomAlert from "../../../components/CustomAlert"; 
 import styles from "./styles.module.css";
 
 
@@ -15,7 +16,9 @@ export default function Scan() {
   const [warehouse_Id, setWarehouse_Id] = useState("wh_fg");
   const [isLocatorValid, setIsLocatorValid] = useState(false);
   const [scanResult, setScanResult] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
   const [scanRecords, setScanRecords] = useState([]);
+  
   const debounceTimeoutRef = useRef(null);
 
   const { data: session, status } = useSession();
@@ -177,11 +180,12 @@ export default function Scan() {
         time_submitted &&
         locator
       ) {
+        // ✅ cek duplicate InventoryID
         const alreadyScanned = scanRecords.some(
           (rec) => rec.Inventory_ID === Inventory_ID
         );
         if (alreadyScanned) {
-          setError("This Inventory ID has already been scanned in.");
+          setAlertMessage(`FG ID ${Inventory_ID} has already been scanned in.`); // ✅ pakai CustomAlert
           return;
         }
         const newRecord = {
@@ -334,6 +338,15 @@ const handleSubmit = async () => {
           </button>
           {error && <p className={styles.error}>{error}</p>}
         </div>
+        {/* ✅ Custom Alert modal */}
+       <CustomAlert
+        message={alertMessage}
+        type="error"
+        onClose={() => setAlertMessage("")}
+        />
+      <div style={{ display: "flex", flexDirection: "row", gap: "50px" }}>
+        {/* input form tetap sama */}
+      </div>
       </div>
       <ScanTable scanRecords={scanRecords} />
     </div>

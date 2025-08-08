@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import ScanTableRm from "../../../components/ScanTableRm";
+import CustomAlert from "../../../components/CustomAlert"; 
 import styles from "./styles.module.css";
 
 export default function Scan() {
@@ -14,6 +15,7 @@ export default function Scan() {
   const [isLocatorValid, setIsLocatorValid] = useState(false);
   const [scanResult, setScanResult] = useState("");
   const [scanRecordsRm, setScanRecordsRm] = useState([]);
+  const [alertMessage, setAlertMessage] = useState("");
   const debounceTimeoutRef = useRef(null);
 
   const { data: session, status } = useSession();
@@ -145,7 +147,7 @@ useEffect(() => {
   };
 
   // QR format: rm_ID|warehouse_ID|part_number|quantity|po_ID|uniqueId|workerBarcode
-  const handleInputChange = (event) => {
+   const handleInputChange = (event) => {
     const scannedData = event.target.value;
 
     if (debounceTimeoutRef.current) {
@@ -174,14 +176,15 @@ useEffect(() => {
         id &&
         worker_barcode
       ) {
-        //cek duplicate rm_id
+        // ✅ cek duplicate rm_ID
         const alreadyScanned = scanRecordsRm.some(
-            (rec) => rec.rm_ID === rm_ID
-          );
-          if (alreadyScanned) {
-            setError("This RM_ID has already been scanned in.");
-            return;
-          }
+          (rec) => rec.rm_ID === rm_ID
+        );
+        if (alreadyScanned) {
+          setAlertMessage(`RM_ID ${rm_ID} has already been scanned in.`); // ✅ pakai alert
+          return;
+        }
+
         const newRecord = {
           rm_ID,
           warehouse_ID, 
@@ -332,6 +335,16 @@ useEffect(() => {
           </button>
           {error && <p className={styles.error}>{error}</p>}
         </div>
+        {/* ✅ tampilkan alert */}
+      <CustomAlert
+        message={alertMessage}
+        type="error"
+        onClose={() => setAlertMessage("")}
+      />
+
+      <div style={{ display: "flex", flexDirection: "row", gap: "50px" }}>
+        {/* input fields tetap sama */}
+      </div>
       </div>
       <ScanTableRm scanRecordsRm={scanRecordsRm} />
     </div>
