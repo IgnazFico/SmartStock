@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import CustomAlert from "./CustomAlert";
 import styles from "./ProductionOrderForm.module.css";
 
 export default function ProductionOrderForm({ order = {}, mode = "view" }) {
@@ -28,6 +29,7 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
   const [operations, setOperations] = useState([]);
   const [activeTab, setActiveTab] = useState("operations");
   const [materials, setMaterials] = useState([]);
+  const [alert, setAlert] = useState({ message: "", type: "info" });
 
   useEffect(() => {
     if (mode === "create") {
@@ -114,6 +116,20 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
   }, [formData?.quantity, materials]);
 
   const handleSave = async () => {
+    // Validate delivery date > production start date
+    if (formData.order_date && formData.due_date) {
+      const start = new Date(formData.order_date);
+      const end = new Date(formData.due_date);
+      if (end <= start) {
+        setAlert({
+          message:
+            "Requested Delivery date must be later than Production Start date.",
+          type: "error",
+        });
+        return;
+      }
+    }
+
     let finalData = { ...formData };
 
     if (!formData.prod_order_id) {
@@ -134,7 +150,13 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
     });
 
     const data = await res.json();
-    alert(data.message || "Order created.");
+    setAlert({
+      message: data.message || "Order created.",
+      type: data.error ? "error" : "success",
+    });
+    if (!data.error) {
+      setFormData((prev) => ({ ...prev, status: "Planned" }));
+    }
   };
 
   const handleRelease = async () => {
@@ -150,8 +172,10 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
               `${mat.component_id}: Required ${mat.calculated_qty}, Available ${mat.available_qty}`
           )
           .join("\n");
-
-        alert("Cannot release order. Insufficient stock:\n" + message);
+        setAlert({
+          message: "Cannot release order. Insufficient stock:\n" + message,
+          type: "error",
+        });
         return;
       }
 
@@ -162,15 +186,26 @@ export default function ProductionOrderForm({ order = {}, mode = "view" }) {
       });
 
       const data = await res.json();
-      alert(data.message || "Order released.");
+      setAlert({
+        message: data.message || "Order released.",
+        type: data.error ? "error" : "success",
+      });
+      if (!data.error) {
+        setFormData((prev) => ({ ...prev, status: "Released" }));
+      }
     } catch (error) {
       console.error("Error during release:", error);
-      alert("Error releasing order.");
+      setAlert({ message: "Error releasing order.", type: "error" });
     }
   };
 
   return (
     <div className={styles.formContainer}>
+      <CustomAlert
+        message={alert.message}
+        type={alert.type}
+        onClose={() => setAlert({ message: "", type: "info" })}
+      />
       <h2 className={styles.title}>Production Order</h2>
 
       <div className={styles.formGrid}>

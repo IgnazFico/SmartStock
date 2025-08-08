@@ -1,6 +1,10 @@
 import connect from "@/utils/db";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export async function GET() {
   try {
     const db = await connect();
@@ -35,7 +39,11 @@ export async function GET() {
       threshold: thresholdMap[item.part_number] ?? 0,
     }));
 
-    return NextResponse.json(result);
+    const response = NextResponse.json(result);
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+    return response;
   } catch (error) {
     console.error("Error fetching stock level:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
