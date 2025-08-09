@@ -138,7 +138,7 @@ export default function NavBar() {
               </ul>
             )}
           </li>
-          {role === "admin" && (
+          {(role === "admin" || role === "super") && (
             <li>
               <a href="/auth/register">
                 <img src="/add-user-svgrepo-com.svg" alt="Register" />
@@ -146,7 +146,7 @@ export default function NavBar() {
               </a>
             </li>
           )}
-          {role === "admin" && (
+          {(role === "admin" || role === "super") && (
             <li>
               <div
                 className={styles.dropdown}
