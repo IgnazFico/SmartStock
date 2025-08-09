@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "./style.module.css";
 import { useSession } from "next-auth/react";
+import CustomAlert from "../../components/CustomAlert"; // ✅ Import CustomAlert
 
 export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
   const { data: session } = useSession();
@@ -16,8 +17,10 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
 
   const [items, setItems] = useState([{ material_ID: "", quantity: "" }]);
   const [materials, setMaterials] = useState([]);
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [savedPR, setSavedPR] = useState(null);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertType, setAlertType] = useState("info");
 
   // Set users_ID dan department dari session
   useEffect(() => {
@@ -69,13 +72,13 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     const isValid = items.every(
       (item) => item.material_ID && item.quantity > 0
     );
     if (!isValid) {
-      setError("Please fill in valid material and quantity for all items.");
+      setAlertMessage("❌ Please fill in valid material and quantity for all items.");
+      setAlertType("error");
       setLoading(false);
       return;
     }
@@ -97,14 +100,16 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || "Fail saving PR data.");
+        throw new Error(err.message || "❌ Failed saving PR data.");
       }
 
-      const saved = await res.json();
-      alert(`✅ Purchase Request successfully saved! PR ID: ${saved.pr_ID}`);
-      onSubmitSuccess?.(saved);
+    const saved = await res.json();
+      setAlertMessage(`✅ Purchase Request successfully saved! PR ID: ${saved.pr_ID}`);
+      setAlertType("success");
+      setSavedPR(saved);
     } catch (err) {
-      setError(err.message);
+      setAlertMessage(err.message);
+      setAlertType("error");
     } finally {
       setLoading(false);
     }
@@ -112,6 +117,17 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
 
   return (
     <div className={styles.formWrapper}>
+      {/* ✅ CustomAlert tampil di atas */}
+      <CustomAlert
+        message={alertMessage}
+        type={alertType}
+        onClose={() => {
+          setAlertMessage("");
+          if (savedPR) {
+            onSubmitSuccess?.(savedPR); // panggil setelah alert di-close
+          }
+        }}
+      />
       <div className={styles.formHeader}>
         <h2 className={styles.title}>Form Purchase Request</h2>
         <button onClick={onClose} className={styles.closeButton} type="button">
@@ -220,8 +236,6 @@ export default function FormPurchaseRequest({ onSubmitSuccess, onClose }) {
         <button type="button" onClick={addItem} className={styles.addButton}>
           + Add Item
         </button>
-
-        {error && <p className={styles.error}>{error}</p>}
 
         <button type="submit" className={styles.formButton} disabled={loading}>
           {loading ? "Saving..." : "Save PR"}
